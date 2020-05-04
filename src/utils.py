@@ -1,8 +1,9 @@
+from collections import Counter, namedtuple
 import pandas as pd
 
-
+n_step = 4
 def find_gitt_cycle(df):
-    return df = df.groupby('Cycle ID').filter(lambda x: len(x[x['Record ID'] == 'CC_DChg'])==n_step)
+    return df.groupby('Cycle ID').filter(lambda x: counting_steps_in_gitt_cycle(x)['CC_DChg']==n_step)
     
   
 def counting_steps_in_gitt_cycle(df):
@@ -12,17 +13,21 @@ def counting_steps_in_gitt_cycle(df):
     counting_steps = Counter(counting_steps['Record ID'])
     return counting_steps
     
-def transform_data_when_chg_equal_dchg(cycle_df):
-    vol+=step_df.iloc[1:-1].tolist()
-    if i[1] == 'Rest':
-        rest.append(step.iloc[-1, -1])
-        r1.append(abs(step.iloc[2,-1] - u))
-        r2.append(abs(step.iloc[-1, -1] - step.iloc[2,-1]))
-    elif i[1] == 'CC_DChg':
-        dchg.append(abs(step.iloc[2, -1] - step.iloc[-1, -1]))
-        u = step.iloc[-1, -1]
-        u_dchg.append(u)
+def transform_data_when_chg_equal_dchg(cycle_df, result):
+    result.vol.extend(cycle_df.iloc[:,-1].tolist())
+    if cycle_df['Record ID'].iloc[0] == 'Rest':
+        result.rest.append(cycle_df.iloc[-1, -1])
+        result.r1.append(abs(cycle_df.iloc[1,-1] - u))
+        result.r2.append(abs(cycle_df.iloc[-1, -1] - cycle_df.iloc[1,-1]))
+    elif cycle_df['Record ID'].iloc[0] == 'CC_DChg':
+	result.vol_without_rest.extend(cycle_df.iloc[:,-1].tolist())
+        result.dchg.append(abs(cycle_df.iloc[1, -1] - cycle_df.iloc[-1, -1]))
+        result.u = cycle_df.iloc[-1, -1]
+        result.u_dchg.append(result.u)
     else:
-        chg.append(abs(step.iloc[2, -1] - step.iloc[-1, -1]))
-        u = step.iloc[-1, -1]
-        u_chg.append(u)
+        result.vol_without_rest.extend(cycle_df.iloc[:,-1].tolist())
+        result.chg.append(abs(cycle_df.iloc[1, -1] - cycle_df.iloc[-1, -1]))
+        result.u = cycle_df.iloc[-1, -1]
+        result.u_chg.append(result.u)
+    
+    return result

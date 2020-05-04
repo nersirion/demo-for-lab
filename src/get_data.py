@@ -1,3 +1,7 @@
+import os
+import pandas as pd
+
+
 def get_data_general(file_path):
     dfs = pd.read_excel(file_path, header=2, sheet_name=None)
     df = pd.concat(dfs[sheet] for sheet in dfs.keys())
@@ -8,6 +12,7 @@ def get_data_general(file_path):
         df['Voltage(V)'] = df['Voltage(V)']/1000
     df['Record ID'] = df['Record ID'].str.replace('\d+', '')
     df = df.groupby('Cycle ID').ffill().dropna()
+    df = df.groupby(['Step ID', 'Record ID']).apply(lambda group: group.iloc[1:, :]).reset_index(drop=True)
     return df
 
 
@@ -17,7 +22,7 @@ def get_data_custom(file_path, sheets_list):
     for sheet in sheets_list:
         try:
             df_on_sheet = pd.read_excel(file_path, sheet_name=sheet)
-            if df_on_sheet.iloc[0, 0] == 'Cycle ID'
+            if df_on_sheet.iloc[0, 0] == 'Cycle ID':
 	        df_on_sheet.columns = df_on_sheet.iloc[0]
                 df_on_sheet = df_on_sheet.drop(0)
         except:
