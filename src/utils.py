@@ -1,4 +1,5 @@
 from collections import Counter, namedtuple
+import functools
 import pandas as pd
 import numpy as np
 
@@ -25,19 +26,28 @@ def set_equal_index_in_cycle(cycle):
     cyclce.index = [i for i in range(len(cycle))]
     return cycle
 
-def cut_needless_value(cycle):
-    return cycle.iloc[:n_step, :]
+def cut_needless_deltaes_value(deltaet):
+    deltaes = deltaes.groupby('Cycle ID').apply(lambda cycle: cycle.iloc[:n_step, :])
+    return deltaes 
 
-def get_result(df):
-    df = df.groupby('Cycle ID').apply(set_equal_index_in_cycle)
-    df = df.groupby('Cycle ID').unstack('Cycle ID')
+def get_result(resulst:pd.Series) -> pd.DataFrame:
+    result = result.groupby('Cycle ID').apply(set_equal_index_in_cycle)
+    df = result.groupby('Cycle ID').unstack('Cycle ID')
     return df
 
-def cut_needless_rest_value_only_dchg(cycle):
-    return cycle.iloc[3::2, :]
+def result_decorator(calculate_func):
+    @functools.wraps(calculate_func)
+    def wrapper(result:pd.Series) -> pd.DataFrame:
+        result =calculate_func(result)
+        df = get_result(result)
+        return df
+    return wrapper
 
-def cut_needless_rest_value(cycle):
-    return cycle.iloc[1::2, :]
+def cut_needless_rohm_value_only_dchg(df:pd.DataFrame) -> pd.DataFrame:
+    return df.iloc[3::2, :]
+
+def cut_needless_rohm_value(df):
+    return df.iloc[1::2, :]
     
 def extract_voltage_if_only_dchg(df:pd.DataFrame):
 
@@ -50,49 +60,33 @@ def add_time_columns(voltage):
 def no_rest_voltage(voltage: pd.DataFrame) -> pd.DataFrame:
     return voltage[voltage['Record ID'] != 'Rest']
 
+def get_final_result(df: pd.DataFrame) -> pd.DataFrame:
+
+    rest_df, dchg_df = get_rest_and_dchg_df(df)
+    d = get_d(rest_df, dchg_df)
+    rpol = calculate_rpol(rest_df)
+    rohm = calculate_rohm(df)
+    rohm = cut_needless_rohm_value_only_dchg(rohm)
+
+    utitr = calculate_utitr(dchg_df)
+    result = 
+
+def get_rest_and_dchg_df(df:pd.DataFrame) -> tuple:
+    rest_df = df[df['Record ID'] == 'Rest']
+    dchg_df = df[df['Record ID'] != 'Rest']
+    return (rest_df, dchg_df)
+
+def get_d(rest_df: pd.DataFrame, dchg_df:pd.DataFrame) -> pd.DataFrame:
+    deltaet = calculate_deltaet(dchg_df)
+    deltaes = calculate_deltaes(rest_df)
+    deltaes = cut_needless_deltaet_value(deltaes)
+    d = calculate_d(deltaet, deltaes)
+    return d
 
 
 
 
 def extract_voltage
-def transform_data_when_chg_equal_dchg(cycle_df, result: dict) -> dict:
-    rest = abs(cycle_df.iloc[0, -1] - temporary_data['rest'][0]) +\
-    list(abs(np.array(temporary_data['rest'][:-1]) - np.array(temporary_data['rest'][1:])))
-    result['vol'].append(cycle_df.loc[:, ['Record ID', 'Step ID', 'Voltage(v)']])
-    result['DeltaEt'].append(temporary_data['chg'] + temporary_data['dchg'])
-    result['DeltaEs'].append(rest)
-    result['U'].append(temporary_data['u_chg'] + temporary_data['u_dchg'])
-    result['Rohm'].append(r1)
-    result['Rpol'].apppend(r2)
-
-    return result
-
-def transform_data_when_chg_not_equal_dchg(result, temporary_data):
-    rest = list(abs(np.array(temporary_data['rest'][:n_step]) - np.array(temporary_data['rest'][1:n_step+1])))
-    #result['Voltage'].append(cycle_df.loc[:, ['Record ID', 'Step ID', 'Voltage(v)']])
-    result['DeltaEt'].append(temporary_data['dchg'])
-    result['DeltaEs'].append(rest)
-    result['U'].append(temporary_data['u_dchg'])
-    result['Rohm'].append(temporary_data['r1'][1:n_step+1])
-    result['Rpol'].append(temporary_data['r2'][1:n_step+1])
-
-    return result
-
-
-def extract_temporary_data(step_df, temporary_data):
-   if step_df['Record ID'].iloc[0] == 'Rest':
-        temporary_data['rest'].append(step_df.iloc[-1, -1])
-        temporary_data['r1'].append(abs(step_df.iloc[1,-1] - temporary_data['u']))
-        temporary_data['r2'].append(abs(step_df.iloc[-1, -1] - step_df.iloc[1,-1]))
-   elif step_df['Record ID'].iloc[0] == 'CC_DChg':
-        temporary_data['dchg'].append(abs(step_df.iloc[1, -1] - step_df.iloc[-1, -1]))
-        temporary_data['u'] = step_df.iloc[-1, -1]
-        temporary_data['u_dchg'].append(temporary_data['u'])
-   else:
-        temporary_data['chg'].append(abs(step_df.iloc[1, -1] - step_df.iloc[-1, -1]))
-        temporary_data['u'] = step_df.iloc[-1, -1]
-        temporary_data['u_chg'].append(temporary_data['u'])
-   return temporary_data
 
 
 def create_df(result):

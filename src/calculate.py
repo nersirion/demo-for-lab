@@ -15,21 +15,25 @@ def calculate_deltaes(rest_df: pd.DataFrame) -> pd.Series:
     deltaes = abs(voltage_groupby.last() - voltage_groupby.last().shift(-1))
     return deltaes
 
+@result_decorator
 def calculate_rohm(df: pd.DataFrame) ->pd.Series:
     voltage_groupby = df.groupby(['Cycle ID', 'Step ID', 'Record ID'])['Voltage(V)']
     rohm = abs(voltage_groupby.last() - voltage_groupby.nth(1).shift(1))
     return rohm
 
+@result_decorator
 def calculate_rpol(rest_df: pd.DataFrame) -> pd.Series:
     voltage_groupby =  df.groupby(['Cycle ID', 'Step ID', 'Record ID'])['Voltage(V)']
     rpol = abs(voltage_groupby.last() - voltage_groupby.nth(1))
     return rpol
 
+@result_decorator
 def calculate_utitr(dchg_df: pd.DataFrame) -> pd.Series:
     voltage_groupby =  df.groupby(['Cycle ID', 'Step ID', 'Record ID'])['Voltage(V)']
     utitr = voltage_groupby.last()
     return utitr
 
+@result_decorator
 def calculate_d(deltaet:pd.Series, deltaes:pd.Series) -> pd.Series:
     d = deltaes/deltaet
     D = calc_D(d)
