@@ -50,3 +50,16 @@ def calculate_mean_no_rest(df:pd.DataFrame) -> pd.Series:
     mean_vol = groupby_df.mean()
     return mean_vol
 
+@drop_record_decorator
+def calculate_qdchg_formirovka(df:pd.DataFrame) -> pd.Series:
+    df = df[df['Record ID'] == 'DCC_Chg']
+    qdchg=df.groupby(['Cycle ID', 'Step ID', 'Record ID']['Cap/mnav'].last()
+    return qdchg
+
+@drop_record_decorator
+def calculate_vol_qchg_formirovka(df:pd.DataFrame) -> pd.DataFrame:
+    df = df[df['Record ID'] == 'CC_DChg']
+    vol_qchg=df.groupby(['Cycle ID', 'Step ID', 'Record ID'][['Voltage(V)', 'Cap/mnav']].last()
+    return vol_qchg
+
+
