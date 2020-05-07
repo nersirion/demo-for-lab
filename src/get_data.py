@@ -3,9 +3,8 @@ import pandas as pd
 
 
 def get_data_general(file_path):
-    dfs = pd.read_excel(file_path, header=2, sheet_name=None)
+    dfs = pd.read_excel(file_path, usecols=[0,1,2,4,8] header=2, sheet_name=None)
     df = pd.concat(dfs[sheet] for sheet in dfs.keys())
-    df = df.iloc[:, [0, 1, 2, 4, 8]]
     df.columns = ['Cycle ID', 'Step ID', 'Record ID', 'Voltage(V)', 'CmpCap(mAh/g)']
     df = df.ffill()
     if df['Voltage(V)'].mean()>1000:
