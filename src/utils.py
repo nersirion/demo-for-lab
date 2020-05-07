@@ -3,7 +3,7 @@ import pandas as pd
 import numpy as np
 
 n_step = 4
-def find_gitt_cycle(df):
+def find_gitt_cycle(df): 
     return df.groupby('Cycle ID').filter(lambda x: counting_steps_in_gitt_cycle(x)['CC_DChg']==n_step)
     
   
@@ -13,8 +13,72 @@ def counting_steps_in_gitt_cycle(df):
     counting_steps = counting_steps.nunique().drop('Record ID', axis=1).reset_index('Record ID')
     counting_steps = Counter(counting_steps['Record ID'])
     return counting_steps
-    
-def transform_data_when_chg_equal_dchg(cycle_df, result):
+   
+def filter_for_deltaet(record_id) -> bool:
+    return bool(record_id['Record ID'].unique() == ['CC_DCchg'])
+
+
+def filter_for_deltaes(record_id) -> bool:
+    return bool(record_id['Record ID'].unique() == ['Rest'])
+
+def set_equal_index_in_cycle(cycle):
+    cyclce.index = [i for i in range(len(cycle))]
+    return cycle
+
+def cut_needless_value(cycle):
+    return cycle.iloc[:n_step, :]
+
+def get_result(df):
+    df = df.groupby('Cycle ID').apply(set_equal_index_in_cycle)
+    df = df.groupby('Cycle ID').unstack('Cycle ID')
+    return df
+
+def cut_needless_rest_value_only_dchg(cycle):
+    return cycle.iloc[3::2, :]
+
+def cut_needless_rest_value(cycle):
+    return cycle.iloc[1::2, :]
+
+def calculate_deltaet(dchg_df: pd.DataFrame) -> pd.Series:
+    voltage_groupby = dchg_df.groupby(['Cycle ID', 'Step ID', 'Record ID'])['Voltage(V)']
+    deltaet = abs(voltage_groupby.nth(1) - voltage_groupby.last())
+    return deltaet
+
+def calculate_deltaes(rest_df: pd.DataFrame) -> pd.Series:
+    voltage_groupby = rest_df.groupby(['Cycle ID', 'Step ID', 'Record ID'])['Voltage(V)']
+    deltaes = abs(voltage_groupby.last() - voltage_groupby.last().shift(-1))
+    return deltaes
+
+def calculate_rohm(df: pd.DataFrame) ->pd.Series:
+    voltage_groupby = df.groupby(['Cycle ID', 'Step ID', 'Record ID'])['Voltage(V)']
+    rohm = abs(voltage_groupby.last() - voltage_groupby.nth(1).shift(1))
+    return rohm
+
+def calculate_rpol(rest_df: pd.DataFrame) -> pd.Series:
+    voltage_groupby =  df.groupby(['Cycle ID', 'Step ID', 'Record ID'])['Voltage(V)']
+    rpol = abs(voltage_groupby.last() - voltage_groupby.nth(1))
+    return rpol
+
+def calculate_utitr(dchg_df: pd.DataFrame) -> pd.Series:
+    voltage_groupby =  df.groupby(['Cycle ID', 'Step ID', 'Record ID'])['Voltage(V)']
+    utitr = voltage_groupby.last()
+    return utitr
+
+def calculate_d(deltaet:pd.Series, deltaes:pd.Series) -> pd.Series:
+    d = deltaes/deltaet
+    D = calc_D(d)
+    return D
+
+def extract_voltage_if_only_dchg(df:pd.DataFrame):
+
+
+
+def calc_D(d:pd.Series) -> pd.Series:
+    D = (4/(math.pi*kwargs['tau']))*(np.square(((kwargs['m']*kwargs['V'])/(kwargs['M']*kwargs['S'])))*np.square(divDelta))    
+    return D
+
+def extract_voltage
+def transform_data_when_chg_equal_dchg(cycle_df, result: dict) -> dict:
     rest = abs(cycle_df.iloc[0, -1] - temporary_data['rest'][0]) +\
     list(abs(np.array(temporary_data['rest'][:-1]) - np.array(temporary_data['rest'][1:])))
     result['vol'].append(cycle_df.loc[:, ['Record ID', 'Step ID', 'Voltage(v)']])
