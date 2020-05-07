@@ -15,13 +15,6 @@ def counting_steps_in_gitt_cycle(df):
     counting_steps = Counter(counting_steps['Record ID'])
     return counting_steps
 
-def filter_for_deltaet(record_id) -> bool:
-    return bool(record_id['Record ID'].unique() == ['CC_DCchg'])
-
-
-def filter_for_deltaes(record_id) -> bool:
-    return bool(record_id['Record ID'].unique() == ['Rest'])
-
 def set_equal_index_in_cycle(cycle):
     cyclce.index = [i for i in range(len(cycle))]
     return cycle
@@ -46,13 +39,13 @@ def result_decorator(calculate_func):
 def cut_needless_rohm_value_only_dchg(df:pd.DataFrame) -> pd.DataFrame:
     return df.iloc[3::2, :]
 
-def cut_needless_rohm_value(df):
+def cut_needless_rohm_value(df:pd.DataFrame) -> pd.DataFrame:
     return df.iloc[1::2, :]
     
 def extract_voltage_if_only_dchg(df:pd.DataFrame):
 
 
-def add_time_columns(voltage):
+def add_time_columns(voltage:pd.DataFrame) -> pd.DataFrame:
     voltage['time'] = voltage.index * 60
     voltage['sqrttime'] = np.square(voltage['time'])
     return voltage
@@ -60,20 +53,38 @@ def add_time_columns(voltage):
 def no_rest_voltage(voltage: pd.DataFrame) -> pd.DataFrame:
     return voltage[voltage['Record ID'] != 'Rest']
 
-def get_final_result(df: pd.DataFrame) -> pd.DataFrame:
+def get_all_results(df: pd.DataFrame) -> list:
 
     rest_df, dchg_df = get_rest_and_dchg_df(df)
     d = get_d(rest_df, dchg_df)
+    logd = d.apply(np.log10)
     rpol = calculate_rpol(rest_df)
-    rohm = calculate_rohm(df)
-    rohm = cut_needless_rohm_value_only_dchg(rohm)
-
+    rohm = get_rohm(df)
     utitr = calculate_utitr(dchg_df)
-    result = 
+    all_results = [d, logd, rpol, rohm, utitr]
+    return all_results 
+
+def get_final_results(all_results:list) -> pd.DataFrame:
+    result = pd.concat(all_results)
+    names = ['D', 'LogD', 'Rpol', 'Rohm', 'U_титр']
+    result.index = [f'{name}_{i}' for name in names for i in range(1,n_step)]
+    return result
+
+def get_rohm(df:pd.DataFrame) -> pd.DataFrame:
+    rohm = calculate_rohm(df)
+    if chg_equal_dchg(df):
+        rohm = cut_needless_rohm_value(df)
+        return rohm
+    rohm = cut_needless_rohm_value_only_dchg
+    return rohm
+
+def chg_equal_dchg(df:pd.DataFrame) -> bool:
+    counting_steps = counting_steps_in_gitt_cycle(df)
+    return counting_steps['CC_DChg'] == counting_steps['DCC_Chg']
 
 def get_rest_and_dchg_df(df:pd.DataFrame) -> tuple:
     rest_df = df[df['Record ID'] == 'Rest']
-    dchg_df = df[df['Record ID'] != 'Rest']
+    dchg_df = dchg_equal_or_not(df) 
     return (rest_df, dchg_df)
 
 def get_d(rest_df: pd.DataFrame, dchg_df:pd.DataFrame) -> pd.DataFrame:
@@ -83,32 +94,9 @@ def get_d(rest_df: pd.DataFrame, dchg_df:pd.DataFrame) -> pd.DataFrame:
     d = calculate_d(deltaet, deltaes)
     return d
 
+def dchg_equal_or_not(df:pd.DataFrame) -> pd.DataFrame:
+    if chg_equal_dchg(df):
+        return df[df['Record ID'] !='Rest']
+    return df[df['Record ID'] == 'CC_DChg']
 
 
-
-def extract_voltage
-
-
-def create_df(result):
-  for name, data in result.items():
-      if name != 'cycle_list':
-         result[name] = pd.DataFrame(data).T
-	 #result[name].columns = ['{}_{}'.format(name,c) for c in range(1,5)]
-  return result
-
-def add_D_df(result):
-   result['D'] = pd.DataFrame(result['DeltaEs'].values/result['DeltaEt'].values)
-   result['logD'] = result['D'].apply(np.log10)
-   return result
-
-
-def concatenate_data_in_final_df(result):
-    Result = pd.concat([
-   		result['D'],
-		result['logD'],
-		result['Rohm'],
-		result['Rpol'],
-		result['U']
-	])
-
-    return Result
