@@ -52,7 +52,7 @@ def calculate_mean_no_rest(df:pd.DataFrame) -> pd.Series:
 
 @drop_record_decorator
 def calculate_qdchg_formirovka(df:pd.DataFrame) -> pd.Series:
-    df = df[df['Record ID'] == 'DCC_Chg']
+    df = df[df['Record ID'] == 'CCCV_Chg']
     qdchg=df.groupby(['Cycle ID', 'Step ID', 'Record ID']['Cap/mnav'].last()
     return qdchg
 

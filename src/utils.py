@@ -28,13 +28,6 @@ def get_result(resulst:pd.Series) -> pd.DataFrame:
     df = result.groupby('Cycle ID').unstack('Cycle ID')
     return df
 
-def result_decorator(calculate_func):
-    @functools.wraps(calculate_func)
-    def wrapper(result:pd.Series) -> pd.DataFrame:
-        result =calculate_func(result)
-        df = get_result(result)
-        return df
-    return wrapper
 
 def cut_needless_rohm_value_only_dchg(df:pd.DataFrame) -> pd.DataFrame:
     return df.iloc[3::2, :]
@@ -42,8 +35,8 @@ def cut_needless_rohm_value_only_dchg(df:pd.DataFrame) -> pd.DataFrame:
 def cut_needless_rohm_value(df:pd.DataFrame) -> pd.DataFrame:
     return df.iloc[1::2, :]
     
-def extract_voltage_if_only_dchg(df:pd.DataFrame):
-
+def extract_voltage_if_only_dchg(df:pd.DataFrame) -> pd.DataFrame:
+    return df[df["Record ID"] != "CCCV_Chg"]
 
 def add_time_columns(voltage:pd.DataFrame) -> pd.DataFrame:
     voltage['time'] = voltage.index * 60
@@ -53,22 +46,6 @@ def add_time_columns(voltage:pd.DataFrame) -> pd.DataFrame:
 def no_rest_voltage(voltage: pd.DataFrame) -> pd.DataFrame:
     return voltage[voltage['Record ID'] != 'Rest']
 
-def get_all_results(df: pd.DataFrame) -> list:
-
-    rest_df, dchg_df = get_rest_and_dchg_df(df)
-    d = get_d(rest_df, dchg_df)
-    logd = d.apply(np.log10)
-    rpol = calculate_rpol(rest_df)
-    rohm = get_rohm(df)
-    utitr = calculate_utitr(dchg_df)
-    all_results = [d, logd, rpol, rohm, utitr]
-    return all_results 
-
-def get_final_results(all_results:list) -> pd.DataFrame:
-    result = pd.concat(all_results)
-    names = ['D', 'LogD', 'Rpol', 'Rohm', 'U_титр']
-    result.index = [f'{name}_{i}' for name in names for i in range(1,n_step)]
-    return result
 
 def get_rohm(df:pd.DataFrame) -> pd.DataFrame:
     rohm = calculate_rohm(df)
@@ -80,7 +57,7 @@ def get_rohm(df:pd.DataFrame) -> pd.DataFrame:
 
 def chg_equal_dchg(df:pd.DataFrame) -> bool:
     counting_steps = counting_steps_in_gitt_cycle(df)
-    return counting_steps['CC_DChg'] == counting_steps['DCC_Chg']
+    return counting_steps['CC_DChg'] == counting_steps['CCCV_Chg']
 
 def get_rest_and_dchg_df(df:pd.DataFrame) -> tuple:
     rest_df = df[df['Record ID'] == 'Rest']
@@ -99,4 +76,32 @@ def dchg_equal_or_not(df:pd.DataFrame) -> pd.DataFrame:
         return df[df['Record ID'] !='Rest']
     return df[df['Record ID'] == 'CC_DChg']
 
+    
+def get_capacity_div_mnav_col(df:pd.DataFrame) -> pd.DataFrame:
+    df['Cap/mnav'] = df['CmcCap(mAh/g)'] / mnav
+    return df
 
+def get_result_formirovka(df:pd.DataFrame) -> pd.DataFrame:
+    qdchg = calculate_qch_formirovka(df)
+    vol_qchg = calculate_qdch_vol_formirovka(df)
+    result = pd.concat([qdch_vol, qch], axis=1)
+    result.columns = ['Vol_end', 'QChg', 'QDch']
+    return result
+
+def get_all_results_gitt(df: pd.DataFrame) -> list:
+
+    rest_df, dchg_df = get_rest_and_dchg_df(df)
+    d = get_d(rest_df, dchg_df)
+    logd = d.apply(np.log10)
+    rpol = calculate_rpol(rest_df)
+    rohm = get_rohm(df)
+    utitr = calculate_utitr(dchg_df)
+    all_results = [d, logd, rpol, rohm, utitr]
+    return all_results 
+
+def get_final_results_gitt(df:pd.DataFrame) -> pd.DataFrame:
+    all_results = get_all_results(df)
+    result = pd.concat(all_results)
+    names = ['D', 'LogD', 'Rpol', 'Rohm', 'U_титр']
+    result.index = [f'{name}_{i}' for name in names for i in range(1,n_step)]
+    return result
