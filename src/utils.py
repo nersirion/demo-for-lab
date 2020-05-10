@@ -100,7 +100,7 @@ def get_all_results_gitt(df: pd.DataFrame) -> list:
     return all_results 
 
 def get_final_results_gitt(df:pd.DataFrame) -> pd.DataFrame:
-    all_results = get_all_results(df)
+    all_results = get_all_results_gitt(df)
     result = pd.concat(all_results)
     names = ['D', 'LogD', 'Rpol', 'Rohm', 'U_титр']
     result.index = [f'{name}_{i}' for name in names for i in range(1,n_step)]
