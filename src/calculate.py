@@ -2,7 +2,7 @@ import pandas as pd
 
 
 def calc_D(d:pd.Series) -> pd.Series:
-    D = (4/(math.pi*kwargs['tau']))*(np.square(((kwargs['m']*kwargs['V'])/(kwargs['M']*kwargs['S'])))*np.square(divDelta))    
+    D = (4/(math.pi*tau))*(np.square(((m*V)/(M*S)))*np.square(d))   
     return D
 
 def calculate_deltaet(dchg_df: pd.DataFrame) -> pd.Series:
@@ -19,12 +19,14 @@ def calculate_deltaes(rest_df: pd.DataFrame) -> pd.Series:
 def calculate_rohm(df: pd.DataFrame) ->pd.Series:
     voltage_groupby = df.groupby(['Cycle ID', 'Step ID', 'Record ID'])['Voltage(V)']
     rohm = abs(voltage_groupby.last() - voltage_groupby.nth(1).shift(1))
+    rohm = rohm / I
     return rohm
 
 @result_decorator
 def calculate_rpol(rest_df: pd.DataFrame) -> pd.Series:
     voltage_groupby =  df.groupby(['Cycle ID', 'Step ID', 'Record ID'])['Voltage(V)']
     rpol = abs(voltage_groupby.last() - voltage_groupby.nth(1))
+    rpol = rpol / I
     return rpol
 
 @result_decorator

@@ -3,7 +3,6 @@ import functools
 import pandas as pd
 import numpy as np
 
-n_step = 4
 def find_gitt_cycle(df): 
     return df.groupby('Cycle ID').filter(lambda x: counting_steps_in_gitt_cycle(x)['CC_DChg']==n_step)
     
@@ -47,12 +46,25 @@ def no_rest_voltage(voltage: pd.DataFrame) -> pd.DataFrame:
     return voltage[voltage['Record ID'] != 'Rest']
 
 
+def get_voltage(df:pd.DataFrame) -> pd.DataFrame:
+    if chg_equal_dchg(df):
+       voltage = df
+    else:
+        voltage = extract_voltage_if_only_dchg(df)
+    voltage = add_time_columns(voltage)
+    return voltage
+
+def get_sqrttime_voltage(voltage: pd.DataFrame) -> pd.DataFrame:
+    sqrttime_voltage = no_rest_voltage(voltage)
+    sqrttime_voltage = sqrttime_voltage.drop("time", axis=1)
+    return sqrttime_voltage
+
 def get_rohm(df:pd.DataFrame) -> pd.DataFrame:
     rohm = calculate_rohm(df)
     if chg_equal_dchg(df):
         rohm = cut_needless_rohm_value(df)
         return rohm
-    rohm = cut_needless_rohm_value_only_dchg
+    rohm = cut_needless_rohm_value_only_dchg(rohm)
     return rohm
 
 def chg_equal_dchg(df:pd.DataFrame) -> bool:
@@ -99,9 +111,25 @@ def get_all_results_gitt(df: pd.DataFrame) -> list:
     all_results = [d, logd, rpol, rohm, utitr]
     return all_results 
 
-def get_final_results_gitt(df:pd.DataFrame) -> pd.DataFrame:
+def get_main_results_gitt(df:pd.DataFrame) -> pd.DataFrame:
     all_results = get_all_results_gitt(df)
     result = pd.concat(all_results)
     names = ['D', 'LogD', 'Rpol', 'Rohm', 'U_титр']
     result.index = [f'{name}_{i}' for name in names for i in range(1,n_step)]
     return result
+
+def get_all_results_gitt(file_path:str) -> dict:
+    df = get_data_general(file_path)
+    result = get_main_results_gitt(df)
+    voltage = get_voltage(df)
+    sqrttime_voltage = get_sqrttime_voltage(voltage)
+    dict_with_data = {"Result": result,
+                        "Voltage": voltage,
+                        "sqrttime": sqrttime_voltage}
+    return dict_with_data
+
+                            
+
+
+
+
