@@ -5,10 +5,10 @@ import numpy as np
 
 n_step = 4
 def find_gitt_cycle(df): 
-    return df.groupby('Cycle ID').filter(lambda x: counting_steps_in_gitt_cycle(x)['CC_DChg']==n_step)
+    return df.groupby('Cycle ID').filter(lambda x: counting_record_id_in_cycle(x)['CC_DChg']==n_step)
     
   
-def counting_steps_in_gitt_cycle(df):
+def counting_record_id_in_cycle(df):
     cycle_list = df['Cycle ID'].unique().astype(int)
     counting_steps=df[df['Cycle ID'] == cycle_list[0]].groupby(['Step ID', 'Record ID'])
     counting_steps = counting_steps.nunique().drop('Record ID', axis=1).reset_index('Record ID')
@@ -56,7 +56,7 @@ def get_rohm(df:pd.DataFrame) -> pd.DataFrame:
     return rohm
 
 def chg_equal_dchg(df:pd.DataFrame) -> bool:
-    counting_steps = counting_steps_in_gitt_cycle(df)
+    counting_steps = counting_record_id_in_cycle(df)
     return counting_steps['CC_DChg'] == counting_steps['CCCV_Chg']
 
 def get_rest_and_dchg_df(df:pd.DataFrame) -> tuple:
@@ -105,3 +105,11 @@ def get_final_results_gitt(df:pd.DataFrame) -> pd.DataFrame:
     names = ['D', 'LogD', 'Rpol', 'Rohm', 'U_титр']
     result.index = [f'{name}_{i}' for name in names for i in range(1,n_step)]
     return result
+
+
+def check_on_rest(df:pd.DataFrame) -> bool:
+    counting_steps = counting_record_id_in_cycle(df)
+    if counting_steps["Rest"]:
+        return True
+    return False
+
