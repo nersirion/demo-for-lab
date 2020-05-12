@@ -1,3 +1,21 @@
+def get_charts_names_gitt_result() -> list:
+    names_and_y = [("Diffrent Cycles", "Volatge"), ("Diffrent Titr", "Cycles")] 
+    x_axis = ["D", "LogD", "Rpol", "Rohm"]
+    charts=[(name, x, y, "Result") for (name, y_axis) in names_and_y for x in x_axis ]
+    return charts
+
+def get_charts_names_voltage_gitt(df:pd.DataFrame) -> list:
+    cycles = df["Cycle ID"].unique()
+    sheets_and_x = [("time", "Voltage"), ("sqrttime", "sqrttime")]
+    charts_vol = [(f"Cycle {cycle}", x, "Voltage", sheet) for (y, sheet) in sheets_and_x for cycle in cycles]
+    return charts_vol
+
+def get_all_charts_names_gitt(df:pd.DataFrame) -> list:
+    charts_res = get_charts_names_gitt_result()
+    charts_vol = get_charts_names_voltage_gitt(df)
+    charts = charts_res + charts_vol
+    return charts
+
 
 class GittCharts(ChartMaker):
 
