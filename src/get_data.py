@@ -1,6 +1,6 @@
 import os
 import pandas as pd
-
+import config
 
 def get_data_general(file_path):
     dfs = pd.read_excel(file_path, usecols=[0,1,2,4,8], header=2, sheet_name=None)
@@ -36,9 +36,8 @@ def get_data_custom(file_path, sheets_list):
     return df
 
 def get_data_for_calculate() -> pd.DataFrame:
-    path = f'{PATH}/result'
-    data = os.listdir(path)
-    df = pd.read_excel(f'{path}/{data}', index_col=0)
+    path = f'{config.PATH}/config/config.xlsx'
+    df = pd.read_excel(path, index_col=0)
     return df
 
 

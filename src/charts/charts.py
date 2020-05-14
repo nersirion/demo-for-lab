@@ -10,12 +10,15 @@ class ExcelWriterWrapper:
         self.worksheets = self.create_worksheets(data_to_excel)
 
     def __call__(self, sheet_name):
+        print(self.worksheets)
+        print(self.worksheets["Result"])
         return self.worksheets[sheet_name]
 
     def create_worksheets(self, data_to_excel:dict) -> dict:
+        worksheets = {}
         for i, (sheet_name, df) in enumerate(data_to_excel.items()):
             df.to_excel(self.writer, sheet_name=sheet_name)
-            worksheets = {sheet_name: self.writer.sheets[sheet_name]}
+            worksheets[sheet_name]=self.writer.sheets[sheet_name]
         return worksheets
 
     def close_writer(self):
@@ -42,13 +45,13 @@ class ChartMaker(ExcelWriterWrapper):
         super().__init__(save_path, data_to_excel)
         self.charts = charts_list
         self.place_charts = place_chart
+        self.generator = Endless()
 
     def __len__(self):
         return len(self.charts)
 
     def __getitem__(self, ind_chart):
         name, sheet_name, x_axis_name, y_axis_name = self.charts[ind_chart]
-        generator = Endless()
         names = self.charts[ind_chart]
         self.add_chart(ind_chart)
         self.add_fake_series(sheet_name, ind_chart)
@@ -65,6 +68,7 @@ class ChartMaker(ExcelWriterWrapper):
         chart.set_y_axis(name_font)
         chart.x_axis["name"] = x_axis_name
         chart.y_axis["name"] = y_axis_name
+        print(self.place_charts[ind_chart])
         self(sheet_name).insert_chart(self.place_charts[ind_chart], chart)
 
     def add_fake_series(self, sheet_name, ind_chart):

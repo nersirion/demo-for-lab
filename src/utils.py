@@ -6,8 +6,9 @@ import numpy as np
 from get_data import *
 
 
-def find_gitt_cycle(df): 
-    return df.groupby('Cycle ID').filter(lambda x: counting_record_id_in_cycle(x)['CC_DChg']==n_step)
+def find_gitt_cycle(df:pd.DataFrame, config_values:dict) -> pd.DataFrame: 
+    return df.groupby('Cycle ID').filter(lambda x: counting_record_id_in_cycle(x)['CC_DChg']==config_values["n_step"])
+
   
 def counting_record_id_in_cycle(df):
     cycle_list = df['Cycle ID'].unique().astype(int)
@@ -27,7 +28,7 @@ def check_on_rest(df:pd.DataFrame) -> bool:
         return True
     return False
 
-def cut_needless_deltaes_value(deltaes):
+def cut_needless_deltaes_value(deltaes:pd.DataFrame, n_step:int) -> pd.DataFrame:
     deltaes = deltaes.groupby('Cycle ID').head(n_step)
     return deltaes 
 
@@ -46,8 +47,8 @@ def cut_needless_rohm_value(rohm:pd.DataFrame) -> pd.DataFrame:
     rohm = set_equal_index_in_cycle(rohm)
     return rohm
     
-def cut_needless_rpol_value_only_dchg(rpol:pd.DataFrame) -> pd.DataFrame:
-    rpol = rpol.iloc[1:n_step+1, :]
+def cut_needless_rpol_value_only_dchg(rpol:pd.DataFrame, config_values:dict) -> pd.DataFrame:
+    rpol = rpol.iloc[1:config_values["n_step"]+1, :]
     rpol = set_equal_index_in_cycle(rpol)
     return rpol
 
@@ -76,19 +77,19 @@ def get_sqrttime_voltage(voltage: pd.DataFrame) -> pd.DataFrame:
     sqrttime_voltage = sqrttime_voltage.drop("time", axis=1)
     return sqrttime_voltage
 
-def get_rohm(df:pd.DataFrame) -> pd.DataFrame:
-    rohm = calculate_rohm(df)
+def get_rohm(df:pd.DataFrame, config_values:dict) -> pd.DataFrame:
+    rohm = calculate_rohm(df, config_values)
     if chg_equal_dchg(df):
         rohm = cut_needless_rohm_value(rohm)
         return rohm
     rohm = cut_needless_rohm_value_only_dchg(rohm)
     return rohm
 
-def get_rpol(rest_df, df):
-    rpol = calculate_rpol(rest_df)
+def get_rpol(rest_df:pd.DataFrame, df:pd.DataFrame, config_values:dict) -> pd.DataFrame:
+    rpol = calculate_rpol(rest_df, config_values)
     if chg_equal_dchg(df):
         return rpol
-    rpol = cut_needless_rpol_value_only_dchg(rpol)
+    rpol = cut_needless_rpol_value_only_dchg(rpol, config_values)
     return rpol
 
 def chg_equal_dchg(df:pd.DataFrame) -> bool:
@@ -100,11 +101,11 @@ def get_rest_and_dchg_df(df:pd.DataFrame) -> tuple:
     dchg_df = dchg_equal_or_not(df) 
     return (rest_df, dchg_df)
 
-def get_d(rest_df: pd.DataFrame, dchg_df:pd.DataFrame) -> pd.DataFrame:
+def get_d(rest_df: pd.DataFrame, dchg_df:pd.DataFrame, config_values:dict) -> pd.DataFrame:
     deltaet = calculate_deltaet(dchg_df)
     deltaes = calculate_deltaes(rest_df)
-    deltaes = cut_needless_deltaes_value(deltaes)
-    d = calculate_d(deltaet, deltaes)
+    deltaes = cut_needless_deltaes_value(deltaes, config_values["n_step"])
+    d = calculate_d(deltaet, deltaes, config_values)
     return d
 
 def dchg_equal_or_not(df:pd.DataFrame) -> pd.DataFrame:
@@ -124,28 +125,29 @@ def get_result_formirovka(df:pd.DataFrame) -> pd.DataFrame:
     result.columns = ['Vol_end', 'QChg', 'QDch']
     return result
 
-def get_all_results_gitt(df: pd.DataFrame) -> list:
+def get_all_results_gitt(df: pd.DataFrame, config_values:dict) -> list:
 
     rest_df, dchg_df = get_rest_and_dchg_df(df)
-    d = get_d(rest_df, dchg_df)
+    d = get_d(rest_df, dchg_df, config_values)
     logd = d.apply(np.log10)
-    rpol = get_rpol(rest_df, df)
-    rohm = get_rohm(df)
+    rpol = get_rpol(rest_df, df, config_values)
+    rohm = get_rohm(df, config_values)
     utitr = calculate_utitr(dchg_df)
     all_results = [d, logd, rpol, rohm, utitr]
     return all_results 
 
-def get_main_results_gitt(df:pd.DataFrame) -> pd.DataFrame:
-    all_results = get_all_results_gitt(df)
+def get_main_results_gitt(df:pd.DataFrame, config_values:dict) -> pd.DataFrame:
+    all_results = get_all_results_gitt(df, config_values)
     result = pd.concat(all_results)
     names = ['D', 'LogD', 'Rpol', 'Rohm', 'U_титр']
-    result.index = [f'{name}_{i}' for name in names for i in range(1,n_step+1)]
+    result.index = [f'{name}_{i}' for name in names for i in range(1,config_values["n_step"]+1)]
     return result
 
-def get_dict_with_all_results_gitt(file_path:str) -> dict:
+def get_dict_with_all_results_gitt(file_path:str, config_values:dict) -> dict:
     df = get_data_general(file_path)
-    df = find_gitt_cycle(df)
-    result = get_main_results_gitt(df)
+    print(type(config_values["n_step"]))
+    df = find_gitt_cycle(df, config_values)
+    result = get_main_results_gitt(df, config_values) 
     voltage = get_voltage(df)
     sqrttime_voltage = get_sqrttime_voltage(voltage)
     dict_with_data = {"Result": result,
@@ -172,8 +174,9 @@ def result_decorator(calculate_func):
         return df
     return transform_in_df
 
-def calc_D(d:pd.Series) -> pd.Series:
-    D = (4/(math.pi*tau))*(np.square(((m*V)/(M*S)))*np.square(d))   
+def calc_D(d:pd.Series, config_values:dict) -> pd.Series:
+    D = (4/(math.pi*config_values["tau"]))*(np.square(((config_values["m"]*\
+            config_values["V"])/(config_values["M"]*config_values["S"])))*np.square(d))   
     return D
 
 def calculate_deltaet(dchg_df: pd.DataFrame) -> pd.Series:
@@ -187,17 +190,17 @@ def calculate_deltaes(rest_df: pd.DataFrame) -> pd.Series:
     return deltaes
 
 @result_decorator
-def calculate_rohm(df:pd.DataFrame) -> pd.Series:
+def calculate_rohm(df:pd.DataFrame, config_values:dict) -> pd.Series:
     voltage_groupby = df.groupby(['Cycle ID', 'Step ID', 'Record ID'])['Voltage(V)']
     rohm = abs(voltage_groupby.last() - voltage_groupby.nth(1).values)
-    rohm = rohm / I
+    rohm = rohm / config_values["I"]
     return rohm
 
 @result_decorator
-def calculate_rpol(rest_df: pd.DataFrame) -> pd.Series:
+def calculate_rpol(rest_df: pd.DataFrame, config_values:dict) -> pd.Series:
     voltage_groupby =  rest_df.groupby(['Cycle ID', 'Step ID', 'Record ID'])['Voltage(V)']
     rpol = abs(voltage_groupby.last() - voltage_groupby.nth(1))
-    rpol = rpol / I
+    rpol = rpol / config_values["I"]
     return rpol
 
 @result_decorator
@@ -207,9 +210,9 @@ def calculate_utitr(dchg_df: pd.DataFrame) -> pd.Series:
     return utitr
 
 @result_decorator
-def calculate_d(deltaet:pd.Series, deltaes:pd.Series) -> pd.Series:
+def calculate_d(deltaet:pd.Series, deltaes:pd.Series, config_values:dict) -> pd.Series:
     d = deltaes/deltaet.values
-    D = calc_D(d)
+    D = calc_D(d, config_values)
     return D
 
 
