@@ -44,6 +44,14 @@ class GittCharts(ChartMaker):
             series["name"] = f"Titr {num_series+1}"
 
 
+def add_series_with_default_options():
+    chart.add_series({'line': {"width": 4},
+                      "smooth": True,
+                      "marker": next(generator.marker()),
+                      "size": 6,
+                      "border": {"color": "black"},
+                      "fill": {'color': next(generator.color()))}})
+
 def correct_num_chart() -> int:
     if name == "Diffrent Titr":
         return num_chart - 4
