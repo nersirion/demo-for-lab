@@ -22,7 +22,7 @@ def get_data_custom(file_path, sheets_list):
         try:
             df_on_sheet = pd.read_excel(file_path, sheet_name=sheet)
             if df_on_sheet.iloc[0, 0] == 'Cycle ID':
-	        df_on_sheet.columns = df_on_sheet.iloc[0]
+                df_on_sheet.columns = df_on_sheet.iloc[0]
                 df_on_sheet = df_on_sheet.drop(0)
         except:
             continue
