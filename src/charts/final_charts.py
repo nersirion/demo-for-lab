@@ -1,13 +1,15 @@
+from charts import ChartMaker
+
 def get_charts_names_gitt_result() -> list:
     names_and_y = [("Diffrent Cycles", "Volatge"), ("Diffrent Titr", "Cycles")] 
     x_axis = ["D", "LogD", "Rpol", "Rohm"]
-    charts=[(name, x, y, "Result") for (name, y_axis) in names_and_y for x in x_axis ]
+    charts=[(name, "Result", x, y) for (name, y_axis) in names_and_y for x in x_axis ]
     return charts
 
 def get_charts_names_voltage_gitt(df:pd.DataFrame) -> list:
     cycles = df["Cycle ID"].unique()
     sheets_and_x = [("time", "Voltage"), ("sqrttime", "sqrttime")]
-    charts_vol = [(f"Cycle {cycle}", x, "Voltage", sheet) for (y, sheet) in sheets_and_x for cycle in cycles]
+    charts_vol = [(f"Cycle {cycle}", sheet, x, "Voltage") for (y, sheet) in sheets_and_x for cycle in cycles]
     return charts_vol
 
 def get_all_charts_names_gitt(df:pd.DataFrame) -> list:
@@ -19,13 +21,13 @@ def get_all_charts_names_gitt(df:pd.DataFrame) -> list:
 
 class GittCharts(ChartMaker):
 
-    def __init__(self):
-        super().__init__()
-        self.cycles = data_to_excel["Result"].columns()
+    def __init__(self, save_path:str, charts_list:list, place_chart:list, data_to_excel:dict):
+        super().__init__(save_path, charts_list, place_chart, data_to_excel)
+        self.cycles = data_to_excel["Result"].columns
 
     def insert_data(self):
         cycles = len(self.cycles)
-        for num_chart, (name, sheet_name) in self:
+        for num_chart, name, sheet_name in self:
             num__chart = correct_num_chart()
             chart = self.workbook.charts[num_chart]
             update_chart(chart)
