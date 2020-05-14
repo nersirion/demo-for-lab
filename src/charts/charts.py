@@ -10,8 +10,6 @@ class ExcelWriterWrapper:
         self.worksheets = self.create_worksheets(data_to_excel)
 
     def __call__(self, sheet_name):
-        print(self.worksheets)
-        print(self.worksheets["Result"])
         return self.worksheets[sheet_name]
 
     def create_worksheets(self, data_to_excel:dict) -> dict:
@@ -22,14 +20,14 @@ class ExcelWriterWrapper:
         return worksheets
 
     def close_writer(self):
-        self.writer.close()
+        self.workbook.close()
 
 
 
 class Endless:
     def __init__(self):
-        self.color = cycle(['square', 'diamond', 'triangle', 'circle'])
-        self.marker = cycle(['FF0000','00FF00','0404B4','8A0886','DF7401'])
+        self.color = cycle( ['7E3414', '34D907', 'FAEF08', 'CE07D5', '970A4C', '584089', '99A417', '0459F9'] )
+        self.marker = cycle(['square', 'diamond', 'triangle', 'circle'])
         
     def __getitem__(self, ind):
         return 
@@ -68,7 +66,6 @@ class ChartMaker(ExcelWriterWrapper):
         chart.set_y_axis(name_font)
         chart.x_axis["name"] = x_axis_name
         chart.y_axis["name"] = y_axis_name
-        print(self.place_charts[ind_chart])
         self(sheet_name).insert_chart(self.place_charts[ind_chart], chart)
 
     def add_fake_series(self, sheet_name, ind_chart):

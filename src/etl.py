@@ -21,6 +21,7 @@ def gitt_result(path:str=config.PATH):
         charts = get_all_charts_names_gitt(dict_to_excel["Result"])
         gitt_charts = GittCharts(save_path, charts, cells_for_charts, dict_to_excel, config_set.config)
         gitt_charts.insert_data()
+        print(save_path)
         gitt_charts.close_writer()
 
 def get_files_from_dir(path:str) -> list:

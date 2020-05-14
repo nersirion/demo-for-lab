@@ -14,6 +14,7 @@ class Config:
     def add_config(self, dict_to_excel:dict):
         self.config["n_cycles"] = len(dict_to_excel["Result"].columns)
         self.config["cycles"] = dict_to_excel["Result"].columns
+        self.config["len_df"] = len(dict_to_excel["Voltage"])
 
 def formirovka_result():
     files = get_files_from_dir(path)

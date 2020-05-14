@@ -1,12 +1,11 @@
 from itertools import product
-import string
 import pandas as pd
 from charts.charts import ChartMaker
 
 def get_charts_names_gitt_result() -> list:
-    names_and_y = [("Diffrent Cycles", "Volatge"), ("Diffrent Titr", "Cycles")] 
-    x_axis = ["D", "LogD", "Rpol", "Rohm"]
-    charts=[(name, "Result", x, y) for (name, y) in names_and_y for x in x_axis ]
+    names_and_x = [("Diffrent Cycles", "Voltage"), ("Diffrent Titr", "Cycles")] 
+    y_axis = ["D", "LogD", "Rpol", "Rohm"]
+    charts=[(name, "Result", x, y) for (name, x) in names_and_x for y in y_axis ]
     return charts
 
 def get_charts_names_voltage_gitt(df:pd.DataFrame) -> list:
@@ -35,41 +34,52 @@ class GittCharts(ChartMaker):
     def __init__(self, save_path:str, charts_list:list, place_chart:list, data_to_excel:dict, config_values:dict):
         super().__init__(save_path, charts_list, place_chart, data_to_excel)
         self.config = config_values
+        print(self.charts)
 
     def insert_data(self):
         for num_chart, name, sheet_name in self:
-            print(num_chart, name, sheet_name)
-            num__chart = correct_num_chart(name, sheet_name, num_chart, self.config["n_cycles"])
             chart = self.workbook.charts[num_chart]
+            num_chart = correct_num_chart(name, sheet_name, num_chart, self.config["n_cycles"])
             update_chart(chart, name, self.config)
             self.add_series(chart, name, sheet_name, num_chart)
+            print(num_chart, name, sheet_name)
 
     def add_series(self, chart, name:str, sheet_name:str, num_chart:int):
         n_step = self.config["n_step"]
         del chart.series[0]
-        for num_series in range(get_number(name, n_step)):
-            add_series_with_default_options(chart, self.generator)
+        for num_series in range(self.get_number(name)):
+            add_series_with_default_options(chart, self.generator, name, sheet_name, num_series, num_chart, self.config)
             series = chart.series[num_series]
-            update_series(series, name, sheet_name, num_series, n_step, num_chart)
-            print(chart.series[num_series])
+            update_series(series, name, sheet_name, num_series, self.config, self.generator)
 
-    def update_legend(self, series):
-        if name == "Diffrent Cycle":
-            series["name"] = f"Cycle {self.cycles[num_series]}"
+    def get_number(self, name:str) -> int:
+        if name == "Diffrent Cycles":
+            return self.config["n_cycles"]
         elif name == "Diffrent Titr":
-            series["name"] = f"Titr {num_series+1}"
+            return self.config["n_step"]
+        else:
+            return 1
 
 
-def add_series_with_default_options(chart, generator):
-    chart.add_series({'line': {"width": 4},
+
+def update_legend(series, name:str, num_series:int, config_values:dict):
+    if name == "Diffrent Cycles":
+        n_cycle = config_values["cycles"][num_series]
+        series["name"] = f"Cycle {n_cycle}"
+    elif name == "Diffrent Titr":
+        series["name"] = f"Titr {num_series+1}"
+
+
+def add_series_with_default_options(chart, generator, name:str, sheet_name:str, num_series:int, num_chart:int, config_values:dict):
+    categories, values = get_categories_and_values(name, sheet_name, num_series, num_chart, config_values)
+    chart.add_series({"categories": categories,
+                      "values": values,
+                      'line': {"width": 4},
                       "smooth": True,
                       "marker":{"type": generator.next_marker()},
                       "size": 6,
                       "border": {"color": "black"},
-                      "fill": {'color': generator.next_color()},
-                      "categories": ["fake", 0,0,0,1],
-                      "values": ["fake", 1,1,1,1]})
-    print(chart.series)
+                      "fill": {'color': generator.next_color()}})
 
 def correct_num_chart(name:str, sheet_name:str, num_chart:int, n_cycles:int) -> int:
     if name == "Diffrent Titr":
@@ -78,14 +88,8 @@ def correct_num_chart(name:str, sheet_name:str, num_chart:int, n_cycles:int) -> 
         return num_chart - 8
     elif sheet_name == "sqrttime":
         return num_chart - n_cycles - 8
-
-def get_number(name:str, n_step:int) -> int:
-    if name == "Diffrent Cycle":
-        return cycle
-    elif name == "Diffrent Titr":
-        return n_step
     else:
-        return 1
+        return num_chart
 
 def update_chart(chart, name:str, config_values:dict):
     min_axis = config_values["Umin"]- 0.1 
@@ -93,7 +97,7 @@ def update_chart(chart, name:str, config_values:dict):
     update_min_max(chart, name, min_axis, max_axis)
 
 def update_min_max(chart, name:str, min_axis:float, max_axis:float):
-    if name == "Diffrent Cycle":
+    if name == "Diffrent Cycles":
         chart.x_axis["min"] = min_axis
         chart.x_axis["max"] = max_axis
         chart.x_axis["reverse"] == True
@@ -101,62 +105,59 @@ def update_min_max(chart, name:str, min_axis:float, max_axis:float):
         chart.y_axis["min"] = min_axis
         chart.y_axis["max"] = max_axis
 
-def update_series(series, name:str, sheet_name:str, num_series:int, n_step:int, num_chart:int):
-    update_categories_and_values(series, name, sheet_name, num_series, n_step, num_chart)
-    update_marker_and_fill(series, sheet_name)
-    update_legend(series, name)
+def update_series(series, name:str, sheet_name:str, num_series:int, config_values:dict, generator):
+    update_marker_and_fill(series, sheet_name, generator)
+    update_legend(series, name, num_series, config_values)
 
 
-def update_marker_and_fill(series, sheet_name:str):
-    if sheet_name == "Result":
-        series["marker"] = {"type": next(gen.marker())}
-        series["fill" ]= {"color": next(gen.color())}
+def update_marker_and_fill(series, sheet_name:str, generator):
+    if sheet_name == "Resudddlt":
+        series["marker"] = {"type": generator.next_marker()}
+        series["fill" ]= {"color": generator.next_color()}
 
-ABC = string.ascii_uppercase
-def update_categories_and_values(series, name:str, sheet_name:str, num_series:int, n_step:int, num_chart:int):
-    row_start, row_end, col_start, col_end = get_row_col_index_categories(name, num_series, n_step, num_chart) 
-    categories_str = f"{sheet_name}!${ABC[col_start]}${row_start}:${col_end}${row_end}"
-    series["categories"] = categories_str
-    row_start, row_end, col_start, col_end = get_row_col_index_values(name, num_series, n_step, num_chart) 
-    values_str = f"{sheet_name}!${ABC[col_start]}${row_start}:${col_end}${row_end}"
-    series["values"] = values_str
+def get_categories_and_values(name:str, sheet_name:str, num_series:int, num_chart:int, config_values:dict):
+    row_start, row_end, col_start, col_end = get_row_col_index_values(name, num_series, num_chart, config_values) 
+    values = [sheet_name, row_start, col_start, row_end, col_end]
+    row_start, row_end, col_start, col_end = get_row_col_index_categories(name, num_series, num_chart, config_values) 
+    categories = [sheet_name, row_start, col_start, row_end, col_end]
+    return (categories, values)
 
-def get_row_col_index_values(name:str, num_series:int, n_step:int, num_chart:int) -> tuple:
-    if name == "Diffrent Cycle":
-        row_start = n_step * num_series + 1
-        row_end = n_step * (num_series + 1)
-        col_start = num_chart + 1
-        col_end = num_chart + 1
+def get_row_col_index_values(name:str, num_series:int, num_chart:int, config_values:dict) -> tuple:
+    if name == "Diffrent Cycles":
+        row_start = config_values["n_step"] * num_chart + 1
+        row_end = config_values["n_step"] * (num_chart + 1)
+        col_start = num_series + 1
+        col_end = num_series + 1
         return (row_start, row_end, col_start, col_end)
     elif name == "Diffrent Titr":
-        row_start = num_series * n_step + num_chart + 1
-        row_end = num_series * n_step + num_chart + 1
+        row_start = num_chart * config_values["n_step"] + num_series + 1
+        row_end = num_chart * config_values["n_step"] + num_series + 1
         col_start = 1
-        col_end = cycles
+        col_end = config_values["n_cycles"]
         return (row_start, row_end, col_start, col_end)
     row_start = 1
-    row_end = len(df) + 1
+    row_end = config_values["len_df"]+ 1
     col_start = num_chart + 1
     col_end = num_chart + 1
     return (row_start, row_end, col_start, col_end) 
 
-def get_row_col_index_categories(name:str, n_step:int) -> tuple:
-    if name == "Diffrent Cycle":
-        row_start = 4 * n_step + 1
-        row_end = 5 * n_step
-        col_start = num_chart + 1
-        col_end = num_chart + 1
+def get_row_col_index_categories(name:str, num_series:int, num_chart:int, config_values:dict) -> tuple:
+    if name == "Diffrent Cycles":
+        row_start = 4 * config_values["n_step"] + 1
+        row_end = 5 * config_values["n_step"]
+        col_start = num_series + 1
+        col_end = num_series + 1
         return (row_start, row_end, col_start, col_end)
     elif name == "Diffrent Titr":
         row_start = 0
         row_end = 0
         col_start = 0
-        col_end = cycles
+        col_end = config_values["n_cycles"]
         return (row_start, row_end, col_start, col_end)
     row_start = 1
-    row_end = len(df) + 1
-    col_start = cycles + 1
-    col_end = cycles + 1
+    row_end =  config_values["len_df"]+ 1
+    col_start = config_values["n_cycles"]+ 1
+    col_end = config_values["n_cycles"]+ 1
     return (row_start, row_end, col_start, col_end) 
         
 """

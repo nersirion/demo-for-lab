@@ -53,24 +53,17 @@ def cut_needless_rpol_value_only_dchg(rpol:pd.DataFrame, config_values:dict) -> 
     return rpol
 
 def extract_voltage_if_only_dchg(df:pd.DataFrame) -> pd.DataFrame:
-    return df[df["Record ID"] != "CCCV_Chg"]
+    df = df[df["Record ID"] != "CCCV_Chg"]
+    voltage = df.groupby("Cycle ID").apply(set_equal_index_in_cycle)
+    return voltage
 
 def add_time_columns(voltage:pd.DataFrame) -> pd.DataFrame:
-    voltage['time'] = voltage.index * 60
-    voltage['sqrttime'] = np.square(voltage['time'])
+    voltage['time'] = (voltage.index - 1) * 60
+    voltage['sqrttime'] = np.sqrt(voltage['time'])
     return voltage
 
-def no_rest_voltage(voltage: pd.DataFrame) -> pd.DataFrame:
-    return voltage[voltage['Record ID'] != 'Rest']
-
-
-def get_voltage(df:pd.DataFrame) -> pd.DataFrame:
-    if chg_equal_dchg(df):
-       voltage = df
-    else:
-        voltage = extract_voltage_if_only_dchg(df)
-    voltage = add_time_columns(voltage)
-    return voltage
+def no_rest_voltage(df: pd.DataFrame) -> pd.DataFrame:
+    return df[df['Record ID'] != 'Rest']
 
 def get_sqrttime_voltage(voltage: pd.DataFrame) -> pd.DataFrame:
     sqrttime_voltage = no_rest_voltage(voltage)
@@ -145,14 +138,12 @@ def get_main_results_gitt(df:pd.DataFrame, config_values:dict) -> pd.DataFrame:
 
 def get_dict_with_all_results_gitt(file_path:str, config_values:dict) -> dict:
     df = get_data_general(file_path)
-    print(type(config_values["n_step"]))
     df = find_gitt_cycle(df, config_values)
     result = get_main_results_gitt(df, config_values) 
-    voltage = get_voltage(df)
-    sqrttime_voltage = get_sqrttime_voltage(voltage)
+    voltage, norest_vol = get_voltage(df)
     dict_with_data = {"Result": result,
                       "Voltage": voltage,
-                      "sqrttime": sqrttime_voltage}
+                      "sqrttime": norest_vol}
     return dict_with_data
 
                             
@@ -173,6 +164,24 @@ def result_decorator(calculate_func):
         df = get_result(result)
         return df
     return transform_in_df
+
+def extract_voltage(df:pd.DataFrame) -> pd.Series:
+    if chg_equal_dchg(df):
+       voltage = df.groupby("Cycle ID").apply(set_equal_index_in_cycle)
+       norest_vol = voltage[voltage["Record ID"] != "Rest"]
+    else:
+       voltage = extract_voltage_if_only_dchg(df)
+       norest_vol = voltage[voltage["Record ID"] != "Rest"]
+    return voltage, norest_vol
+
+def get_voltage(df:pd.DataFrame) -> pd.DataFrame:
+    voltage, norest_vol = extract_voltage(df)
+    voltage = voltage["Voltage(V)"].unstack("Cycle ID")
+    voltage = add_time_columns(voltage)
+    norest_vol = norest_vol["Voltage(V)"].unstack("Cycle ID")
+    norest_vol = add_time_columns(norest_vol)
+    norest_vol = norest_vol.drop("time", axis=1)
+    return voltage, norest_vol
 
 def calc_D(d:pd.Series, config_values:dict) -> pd.Series:
     D = (4/(math.pi*config_values["tau"]))*(np.square(((config_values["m"]*\
