@@ -1,15 +1,35 @@
+from charts import ChartMaker
+
+def get_charts_names_gitt_result() -> list:
+    names_and_y = [("Diffrent Cycles", "Volatge"), ("Diffrent Titr", "Cycles")] 
+    x_axis = ["D", "LogD", "Rpol", "Rohm"]
+    charts=[(name, "Result", x, y) for (name, y_axis) in names_and_y for x in x_axis ]
+    return charts
+
+def get_charts_names_voltage_gitt(df:pd.DataFrame) -> list:
+    cycles = df["Cycle ID"].unique()
+    sheets_and_x = [("time", "Voltage"), ("sqrttime", "sqrttime")]
+    charts_vol = [(f"Cycle {cycle}", sheet, x, "Voltage") for (y, sheet) in sheets_and_x for cycle in cycles]
+    return charts_vol
+
+def get_all_charts_names_gitt(df:pd.DataFrame) -> list:
+    charts_res = get_charts_names_gitt_result()
+    charts_vol = get_charts_names_voltage_gitt(df)
+    charts = charts_res + charts_vol
+    return charts
+
 
 class GittCharts(ChartMaker):
 
-    def __init__(self):
-        super().__init__()
-        self.cycles = data_to_excel["Result"].columns()
+    def __init__(self, save_path:str, charts_list:list, place_chart:list, data_to_excel:dict):
+        super().__init__(save_path, charts_list, place_chart, data_to_excel)
+        self.cycles = data_to_excel["Result"].columns
 
     def insert_data(self):
         cycles = len(self.cycles)
-        for num_chart, (name, sheet_name) in self:
+        for num_chart, name, sheet_name in self:
             num__chart = correct_num_chart()
-            chart = self.workbook.charts[ind_chart]
+            chart = self.workbook.charts[num_chart]
             update_chart(chart)
             self.add_series()
 
@@ -25,6 +45,14 @@ class GittCharts(ChartMaker):
         elif name == "Diffrent Titr":
             series["name"] = f"Titr {num_series+1}"
 
+
+def add_series_with_default_options():
+    chart.add_series({'line': {"width": 4},
+                      "smooth": True,
+                      "marker": next(generator.marker()),
+                      "size": 6,
+                      "border": {"color": "black"},
+                      "fill": {'color': next(generator.color()))}})
 
 def correct_num_chart() -> int:
     if name == "Diffrent Titr":
@@ -113,5 +141,48 @@ def get_row_col_index_categories() -> tuple:
     return (row_start, row_end, col_start, col_end) 
         
 
+class FormirovkaCharts(ChartMaker):
+    
+    def __init__(self):
+        super().__init__()
+        self.cycles = data_to_excel[file].["Cycle ID"].unique()
+        self.ind_chg = 
+        self.ind_dchg =
+        self.last_index =
+    def insert_data(self):
+        for num_chart, (name, sheet_name) in self:
+            chart = self.workbook.charts[num_chart]
+            add_series()
+
+    def add_series(self):
+        for i, cycle in enumerate(self.cycles):
+            get_series(chart, title="Cycle Chg")
+            get_series(chart, title="Cycle Dchg")
 
 
+        
+
+def set_categories_and_values(title:str):
+        row_start, row_end = get_row_number(title)
+        series["categories"] = [sheet_name, row_start, 6, row_end, 6]]
+        series["values"] = [sheet_name, row_start, 4, row_end, 4]
+
+def set_series_setings(chart, title:str):
+    chart._add_series()
+    series["name"] = f"{title} {cycle}"
+    series["line"] = {"width": 4, "color": next(generator.color())}
+    series["smooth"] = True
+
+
+def get_series(chart, title:str):
+    set_series_setings(chart, title:str)
+    set_categories_and_values(title:str)
+    
+def get_row_col(title:str) -> tuple:
+    if title == "Cycle Chg":
+        row_start = ind_chg[i] + 2
+        row_end = ind_dchg[i]
+    else:
+        row_start = ind_dchg[i] + 2
+        row_end = last_index[i] + 2
+    return (row_start, row_end)

@@ -7,9 +7,9 @@ from get_data import *
 
 
 def find_gitt_cycle(df): 
-    return df.groupby('Cycle ID').filter(lambda x: counting_steps_in_gitt_cycle(x)['CC_DChg']==n_step)
+    return df.groupby('Cycle ID').filter(lambda x: counting_record_id_in_cycle(x)['CC_DChg']==n_step)
   
-def counting_steps_in_gitt_cycle(df):
+def counting_record_id_in_cycle(df):
     cycle_list = df['Cycle ID'].unique().astype(int)
     counting_steps=df[df['Cycle ID'] == cycle_list[0]].groupby(['Step ID', 'Record ID'])
     counting_steps = counting_steps.nunique().drop('Record ID', axis=1).reset_index('Record ID')
@@ -20,6 +20,12 @@ def set_equal_index_in_cycle(cycle):
     r = range(1, len(cycle)+1)
     cycle.index = [i for i in r]
     return cycle
+
+def check_on_rest(df:pd.DataFrame) -> bool:
+    counting_steps = counting_record_id_in_cycle(df)
+    if counting_steps["Rest"]:
+        return True
+    return False
 
 def cut_needless_deltaes_value(deltaes):
     deltaes = deltaes.groupby('Cycle ID').head(n_step)
@@ -86,7 +92,7 @@ def get_rpol(rest_df, df):
     return rpol
 
 def chg_equal_dchg(df:pd.DataFrame) -> bool:
-    counting_steps = counting_steps_in_gitt_cycle(df)
+    counting_steps = counting_record_id_in_cycle(df)
     return counting_steps['CC_DChg'] == counting_steps['CCCV_Chg']
 
 def get_rest_and_dchg_df(df:pd.DataFrame) -> tuple:
@@ -228,8 +234,5 @@ def calculate_vol_qchg_formirovka(df:pd.DataFrame) -> pd.DataFrame:
     df = df[df['Record ID'] == 'CC_DChg']
     vol_qchg=df.groupby(['Cycle ID', 'Step ID', 'Record ID'][['Voltage(V)', 'Cap/mnav']]).last()
     return vol_qchg
-
-
-
 
 
