@@ -28,9 +28,7 @@ class Endless:
     def __init__(self):
         self.color = cycle( ['7E3414', '34D907', 'FAEF08', 'CE07D5', '970A4C', '584089', '99A417', '0459F9'] )
         self.marker = cycle(['square', 'diamond', 'triangle', 'circle'])
-        
-    def __getitem__(self, ind):
-        return 
+
     def next_color(self):
         return next(self.color)
 
@@ -38,7 +36,7 @@ class Endless:
         return next(self.marker)
 
 class ChartMaker(ExcelWriterWrapper):
-    
+
     def __init__(self, save_path:str, charts_list:list, place_chart:list, data_to_excel:dict):
         super().__init__(save_path, data_to_excel)
         self.charts = charts_list
@@ -59,7 +57,7 @@ class ChartMaker(ExcelWriterWrapper):
         name, sheet_name, x_axis_name, y_axis_name = self.charts[ind_chart]
         chart = self.workbook.add_chart({'type': 'scatter',
                               'subtype': 'smooth'})
-        chart.set_size({'x_scale': 1.6, 'y_scale': 1.4})
+        chart.set_size({'x_scale': 1.2, 'y_scale': 1.2})
         chart.set_title({'name': name})
         name_font = {'name_font':{'name': 'Times New Roman', 'size': 12}}
         chart.set_x_axis(name_font)

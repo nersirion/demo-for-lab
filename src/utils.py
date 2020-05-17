@@ -136,16 +136,25 @@ def dchg_equal_or_not(df: pd.DataFrame) -> pd.DataFrame:
     return df[df["Record ID"] == "CC_DChg"]
 
 
-def get_capacity_div_mnav_col(df: pd.DataFrame) -> pd.DataFrame:
-    df["Cap/mnav"] = df["CmcCap(mAh/g)"] / mnav
+def get_capacity_div_mnav_col(df: pd.DataFrame, config_values: dict) -> pd.DataFrame:
+    df["Cap/mnav"] = df["CmcCap(mAh/g)"] / config_values["mnav"]
+    return df
+
+def add_name_sample(df: pd.DataFrame, config_values: dict) -> pd.DataFrame:
+    df["sample"] = config_values["sample"]
+    df = df.reset_index()
+    df = df.set_index(["sample", "Cycle ID"])
     return df
 
 
-def get_result_formirovka(df: pd.DataFrame) -> pd.DataFrame:
-    qdchg = calculate_qch_formirovka(df)
-    vol_qchg = calculate_qdch_vol_formirovka(df)
-    result = pd.concat([qdch_vol, qch], axis=1)
+def get_result_formirovka(df: pd.DataFrame, config_values: dict) -> pd.DataFrame:
+    df = get_capacity_div_mnav_col(df, config_values)
+    qdchg = calculate_qdchg_formirovka(df)
+    qchg_vol = calculate_qchg_vol_formirovka(df)
+    result = pd.concat([qchg_vol, qdchg], axis=1)
     result.columns = ["Vol_end", "QChg", "QDch"]
+    result = result.iloc[:-1, :]
+    result = add_name_sample(result, config_values)
     return result
 
 
@@ -164,12 +173,22 @@ def get_all_results_gitt(df: pd.DataFrame, config_values: dict) -> list:
 def get_main_results_gitt(df: pd.DataFrame, config_values: dict) -> pd.DataFrame:
     all_results = get_all_results_gitt(df, config_values)
     result = pd.concat(all_results)
-    names = ["D", "LogD", "Rpol", "Rohm", "U_титр"]
-    result.index = [
-        f"{name}_{i}" for name in names for i in range(1, config_values["n_step"] + 1)
-    ]
+    result.index = set_index_names(df, config_values)
     return result
 
+def set_index_names(df: pd.DataFrame, config_values: dict) -> list:
+    names = ["D", "LogD", "Rpol", "Rohm", "U_титр"]
+    if chg_equal_dchg(df):
+        index = [
+            f"{name}_{i}" for name in names for i in range(1, config_values["n_step"] * 2 + 1)
+        ]
+    else:
+        index = [
+            f"{name}_{i}" for name in names for i in range(1, config_values["n_step"] + 1)
+        ]
+    return index
+
+        
 
 def get_dict_with_all_results_gitt(file_path: str, config_values: dict) -> dict:
     df = get_data_general(file_path)
@@ -182,7 +201,7 @@ def get_dict_with_all_results_gitt(file_path: str, config_values: dict) -> dict:
 
 def drop_record_decorator(function):
     def drop_record_id(result):
-        return result.reset_index("Record ID", drop=True)
+        return result.reset_index(["Record ID", "Step ID"], drop=True)
 
     @functools.wraps(function)
     def wrapper(result):
@@ -302,15 +321,16 @@ def calculate_mean_no_rest(df: pd.DataFrame) -> pd.Series:
 
 @drop_record_decorator
 def calculate_qdchg_formirovka(df: pd.DataFrame) -> pd.Series:
-    df = df[df["Record ID"] == "CCCV_Chg"]
-    qdchg = df.groupby(["Cycle ID", "Step ID", "Record ID"]["Cap/mnav"]).last()
+    df = df[df["Record ID"] == "CC_DChg"]
+    qdchg = df.groupby(["Cycle ID", "Step ID", "Record ID"])["Cap/mnav"].last()
     return qdchg
 
 
 @drop_record_decorator
-def calculate_vol_qchg_formirovka(df: pd.DataFrame) -> pd.DataFrame:
-    df = df[df["Record ID"] == "CC_DChg"]
+def calculate_qchg_vol_formirovka(df: pd.DataFrame) -> pd.DataFrame:
+    df = df[df["Record ID"] == "CCCV_Chg"]
     vol_qchg = df.groupby(
-        ["Cycle ID", "Step ID", "Record ID"][["Voltage(V)", "Cap/mnav"]]
-    ).last()
+        ["Cycle ID", "Step ID", "Record ID"])[["Voltage(V)", "Cap/mnav"]].last()
     return vol_qchg
+
+

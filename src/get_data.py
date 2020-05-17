@@ -6,7 +6,7 @@ import config
 def get_data_general(file_path):
     dfs = pd.read_excel(file_path, usecols=[0, 1, 2, 4, 8], header=2, sheet_name=None)
     df = pd.concat(dfs[sheet] for sheet in dfs.keys())
-    df.columns = ["Cycle ID", "Step ID", "Record ID", "Voltage(V)", "CmpCap(mAh/g)"]
+    df.columns = ["Cycle ID", "Step ID", "Record ID", "Voltage(V)", "CmcCap(mAh/g)"]
     df = df.ffill()
     if df["Voltage(V)"].mean() > 1000:
         df["Voltage(V)"] = df["Voltage(V)"] / 1000
@@ -42,7 +42,7 @@ def get_data_custom(file_path, sheets_list):
     return df
 
 
-def get_data_for_calculate() -> pd.DataFrame:
-    path = f"{config.PATH}/config/config.xlsx"
+def get_data_for_calculate(path: str) -> pd.DataFrame:
+    path = f"{path}/config/config.xlsx"
     df = pd.read_excel(path, index_col=0)
     return df
