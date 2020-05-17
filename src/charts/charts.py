@@ -3,7 +3,7 @@ import pandas as pd
 from itertools import cycle
 
 class ExcelWriterWrapper:
-    
+
     def __init__(self, save_path:str, data_to_excel:dict):
         self.writer = pd.ExcelWriter(save_path, engine="xlsxwriter")
         self.workbook = self.writer.book
