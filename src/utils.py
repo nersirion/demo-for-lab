@@ -41,11 +41,25 @@ def cut_needless_deltaes_value(deltaes: pd.DataFrame, n_step: int) -> pd.DataFra
     deltaes = deltaes.groupby("Cycle ID").head(n_step)
     return deltaes
 
+def modificate_deltaes(deltaes: pd.Series, rest_df: pd.DataFrame, dchg_df: pd.DataFrame) -> pd.Series:
+    deltaes = deltaes.shift(1)
+    x = dchg_df.groupby("Cycle ID")["Voltage(V)"].first()
+    y = rest_df.groupby(["Cycle ID", "Step ID"])["Voltage(V)"].last().groupby("Cycle ID").first()
+    deltaes.iloc[0] = abs(x-y).loc[deltaes.index[0][0]]
+    return deltaes
+
+def update_deltaes(
+    deltaes: pd.Series, rest_df: pd.DataFrame, dchg_df: pd.DataFrame
+) -> pd.Series:
+    deltaes = deltaes.groupby("Cycle ID").apply(lambda x: modificate_deltaes(x, rest_df, dchg_df))
+    return deltaes
+
 
 def get_result(result: pd.Series) -> pd.DataFrame:
     result = result.groupby("Cycle ID").apply(set_equal_index_in_cycle)
-    df = result.unstack("Cycle ID")
-    return df
+    result = result.unstack("Cycle ID")
+    result = result.replace(np.inf, np.nan)
+    return result
 
 
 def cut_needless_rohm_value_only_dchg(rohm: pd.DataFrame) -> pd.DataFrame:
@@ -125,7 +139,10 @@ def get_d(
 ) -> pd.DataFrame:
     deltaet = calculate_deltaet(dchg_df)
     deltaes = calculate_deltaes(rest_df)
-    deltaes = cut_needless_deltaes_value(deltaes, config_values["n_step"])
+    if chg_equal_dchg(dchg_df):
+        deltaes = update_deltaes(deltaes, rest_df, dchg_df)
+    else:
+        deltaes = cut_needless_deltaes_value(deltaes, config_values["n_step"])
     d = calculate_d(deltaet, deltaes, config_values)
     return d
 
@@ -274,7 +291,7 @@ def calculate_deltaes(rest_df: pd.DataFrame) -> pd.Series:
 @result_decorator
 def calculate_rohm(df: pd.DataFrame, config_values: dict) -> pd.Series:
     voltage_groupby = df.groupby(["Cycle ID", "Step ID", "Record ID"])["Voltage(V)"]
-    rohm = abs(voltage_groupby.last() - voltage_groupby.nth(1).values)
+    rohm = abs(voltage_groupby.last().shift(1) - voltage_groupby.nth(1).values)
     rohm = rohm / config_values["I"]
     return rohm
 

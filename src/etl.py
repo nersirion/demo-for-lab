@@ -12,11 +12,11 @@ from get_data import get_data_for_calculate, get_data_general
 from config import Config
 
 
-def gitt_result(path: str = config.PATH):
+def gitt_result(path: str):
     files = get_files_from_dir(path)
     config_set = Config(path)
     for file in files:
-        sample, file_path = preparing_for_charts(path, file)
+        sample, file_path, config_set = preparing_for_charts(path, file, config_set)
         dict_to_excel = get_dict_with_all_results_gitt(file_path, config_set.config)
         config_set.add_config(dict_to_excel)
         cells_for_charts = get_insert_cells_gitt(config_set.config)
@@ -34,11 +34,11 @@ def get_files_from_dir(path: str) -> list:
     return files
 
 
-def preparing_for_charts(path: str, file: str) -> tuple:
-    sample = re.sub("_gene*", "", file)
+def preparing_for_charts(path: str, file: str, config_set) -> tuple:
+    sample = re.sub("_gene.*", "", file)
     config_set(sample)
     file_path = f"{path}/{file}"
-    return (sample, file_path)
+    return (sample, file_path, config_set)
 
 
 def create_save_path(path: str, sample: str, config_values: dict) -> str:
@@ -55,7 +55,7 @@ def make_direrctory(dir_path: str):
         os.makedirs(dir_path)
 
 
-def formirovka_result(path: str = congig.PATH):
+def formirovka_result(path: str = config.PATH):
     files = get_files_from_dir(path)
     config_set = Config(path)
     result = pd.DataFrame()
