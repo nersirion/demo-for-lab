@@ -75,3 +75,13 @@ def formirovka_result(path: str = config.PATH):
     form_chart = FormirovkaCharts(save_path, charts, cells, data_to_excel)
     form_chart.insert_data()
     form_chart.close_writer()
+
+def mean_result(path: str):
+    files = get_files_from_dir(path)
+    mean_df = pd.DataFrame()
+    for file in files:
+        sample = re.sub('gene*|custom*', file)
+        df = get_result_mean(f"{file_path}/{file}")
+        df['sample'] = sample
+        mean_df = pd.concat([mean_df, df])
+    mean_df.to_excel('mean_df.xlsx')

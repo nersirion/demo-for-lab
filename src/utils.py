@@ -3,7 +3,7 @@ import functools
 import math
 import pandas as pd
 import numpy as np
-from get_data import *
+from get_data import get_data_general, get_data_custom
 
 
 def find_gitt_cycle(df: pd.DataFrame, config_values: dict) -> pd.DataFrame:
@@ -205,10 +205,17 @@ def set_index_names(df: pd.DataFrame, config_values: dict) -> list:
         ]
     return index
 
-        
+
+
+def get_df(file_path: str) -> pd.DataFrame:
+    if file_path.contains('general_'):
+        df = get_data_general(file_path)
+        return df
+    df = get_data_custom(file_path)
+    return df
 
 def get_dict_with_all_results_gitt(file_path: str, config_values: dict) -> dict:
-    df = get_data_general(file_path)
+    df = get_df(file_path)
     df = find_gitt_cycle(df, config_values)
     result = get_main_results_gitt(df, config_values)
     voltage, norest_vol = get_voltage(df)
@@ -350,4 +357,8 @@ def calculate_qchg_vol_formirovka(df: pd.DataFrame) -> pd.DataFrame:
         ["Cycle ID", "Step ID", "Record ID"])[["Voltage(V)", "Cap/mnav"]].last()
     return vol_qchg
 
-
+def get_result_mean(file_path: str) -> pd.DataFrame:
+    df = get_df(file_path)
+    if check_on_rest(df):
+        return calculate_mean_if_rest(df)
+    return calculate_mean_no_rest(df)
