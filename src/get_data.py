@@ -20,16 +20,15 @@ def get_data_general(file_path):
     return df
 
 
-def get_data_custom(file_path, sheets_list):
+def get_data_custom(file_path):
     df = pd.DataFrame()
-    for sheet in sheets_list:
-        try:
-            df_on_sheet = pd.read_excel(file_path, sheet_name=sheet)
-            if df_on_sheet.iloc[0, 0] == "Cycle ID":
-                df_on_sheet.columns = df_on_sheet.iloc[0]
-                df_on_sheet = df_on_sheet.drop(0)
-        except:
+    dfs_on_sheets = pd.read_excel(file_path, sheet_name=None)
+    for sheet, df_on_sheet in dfs_on_sheets.items():
+        if 'record' not in sheet:
             continue
+        if df_on_sheet.iloc[0, 0] == "Cycle ID":
+            df_on_sheet.columns = df_on_sheet.iloc[0]
+            df_on_sheet = df_on_sheet.drop(0)
         if 'Temperature(°C)' in str(df_on_sheet.columns[:8]):
             df_on_sheet = df_on_sheet.iloc[:, [0, 1, 2, 5, 8]]
         else:

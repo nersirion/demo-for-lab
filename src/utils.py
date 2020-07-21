@@ -390,8 +390,7 @@ def correcting_result(column: pd.Series) -> pd.Series:
     return column
 
 def get_result_mean(file_path: str, config_values: dict) -> pd.DataFrame:
-    sheet_list = ['record__1', 'record__2', 'record', 'record_1', 'record_2']
-    df = get_data_custom(file_path, sheet_list)
+    df = get_data_custom(file_path)
     df = get_capacity_div_mnav_col(df, config_values)
     if check_on_rest(df):
         mean_df = calculate_mean_if_rest(df)
