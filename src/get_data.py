@@ -30,7 +30,10 @@ def get_data_custom(file_path, sheets_list):
                 df_on_sheet = df_on_sheet.drop(0)
         except:
             continue
-        df_on_sheet = df_on_sheet.iloc[:, [0, 1, 2, 5, 8]]
+        if 'Temperature(°C)' in str(df_on_sheet.columns[:8]):
+            df_on_sheet = df_on_sheet.iloc[:, [0, 1, 2, 5, 8]]
+        else:
+            df_on_sheet = df_on_sheet.iloc[:, [0, 1, 2, 5, 7]]
         df_on_sheet.columns = ["Cycle ID", "Step ID", "Record ID", "Voltage(V)", "CmcCap(mAh/g)"]
         df_on_sheet = df_on_sheet.astype(
             {"Cycle ID": "float", "Step ID": "float", "Voltage(V)": "float"}

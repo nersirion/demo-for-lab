@@ -343,11 +343,11 @@ def drop_rest_from_df(df: pd.DataFrame) -> pd.DataFrame:
 
 def get_last_cap_value(df: pd.DataFrame, rest: bool=True) -> pd.DataFrame:
     if rest:
-        df = get_groupby_df(df)
+        df = get_groupby_df(df, rest=False)
         df = drop_rest_from_df(df)
         cap_df = get_groupby_df(df)["Cap/mnav"].last()
         return cap_df.unstack("Record ID")
-    cap_df = get_groupby_df(df)["Cap/mnav"].last()
+    cap_df = get_groupby_df(df, rest=False)["Cap/mnav"].last()
     return cap_df.unstack("Record ID")
 
 def calculate_spec_emergy(mean_df: pd.DataFrame, cap_df: pd.DataFrame):
@@ -384,6 +384,10 @@ def calculate_qchg_vol_formirovka(df: pd.DataFrame) -> pd.DataFrame:
         ["Cycle ID", "Step ID", "Record ID"])[["Voltage(V)", "Cap/mnav"]].last()
     return vol_qchg
 
+def correcting_result(column: pd.Series) -> pd.Series:
+    num = len(str(int(1000/column.mean())))-1
+    column = column * 10**num
+    return column
 
 def get_result_mean(file_path: str, config_values: dict) -> pd.DataFrame:
     sheet_list = ['record__1', 'record__2', 'record', 'record_1', 'record_2']

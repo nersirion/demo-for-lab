@@ -8,7 +8,7 @@ from charts.final_charts import (
     get_all_charts_names_gitt,
     get_insert_cells_gitt,
 )
-from utils import get_dict_with_all_results_gitt, get_result_formirovka, get_result_mean
+from utils import get_dict_with_all_results_gitt, get_result_formirovka, get_result_mean, correcting_result
 from get_data import get_data_for_calculate, get_data_general
 from config import Config
 
@@ -86,5 +86,7 @@ def mean_result(path: str):
         df = get_result_mean(file_path, config_set.config)
         df['sample'] = sample
         df = df.reset_index().set_index(['sample', 'Cycle ID'])
+        df.iloc[:, -2] = correcting_result(df.iloc[:, -2])
+        df.iloc[:, -1] = correcting_result(df.iloc[:, -1])
         mean_df = pd.concat([mean_df, df])
     return mean_df
