@@ -30,12 +30,12 @@ def get_data_custom(file_path, sheets_list):
                 df_on_sheet = df_on_sheet.drop(0)
         except:
             continue
-        df_on_sheet = df_on_sheet.iloc[:, [0, 1, 2, 5]]
-        df_on_sheet.columns = ["Cycle ID", "Step ID", "Step Name", "Voltage(V)"]
+        df_on_sheet = df_on_sheet.iloc[:, [0, 1, 2, 5, 8]]
+        df_on_sheet.columns = ["Cycle ID", "Step ID", "Record ID", "Voltage(V)", "CmcCap(mAh/g)"]
         df_on_sheet = df_on_sheet.astype(
             {"Cycle ID": "float", "Step ID": "float", "Voltage(V)": "float"}
         )
-        df_on_sheet["Step Name"] = df_on_sheet["Step Name"].str.replace("\t", "")
+        df_on_sheet["Record ID"] = df_on_sheet["Record ID"].str.replace("\t", "")
         if df_on_sheet["Voltage(V)"].mean() > 1000:
             df["Voltage(V)"] = df["Voltage(V)"] / 1000
         df = pd.concat([df_on_sheet, df])

@@ -1,5 +1,6 @@
 import os
 import re
+import pandas as pd
 import config
 from charts.final_charts import (
     FormirovkaCharts,
@@ -7,7 +8,7 @@ from charts.final_charts import (
     get_all_charts_names_gitt,
     get_insert_cells_gitt,
 )
-from utils import get_dict_with_all_results_gitt, get_result_formirovka
+from utils import get_dict_with_all_results_gitt, get_result_formirovka, get_result_mean
 from get_data import get_data_for_calculate, get_data_general
 from config import Config
 
@@ -35,7 +36,7 @@ def get_files_from_dir(path: str) -> list:
 
 
 def preparing_for_charts(path: str, file: str, config_set) -> tuple:
-    sample = re.sub("_gene.*", "", file)
+    sample = re.sub("_gene.*|_custo.*", "", file)
     config_set(sample)
     file_path = f"{path}/{file}"
     return (sample, file_path, config_set)
@@ -62,7 +63,7 @@ def formirovka_result(path: str = config.PATH):
     data_to_excel = {}
     for file in files:
         sample, file_path = preparing_for_charts(path, file)
-        df = get_data_general(file_path)
+        df = get_df(file_path)
         result=result.append(get_result_formirovka(df, config_set.config))
         data_to_excel[sample] = df
     result.to_excel(f"{path}/result/result.xlsx")
@@ -79,9 +80,11 @@ def formirovka_result(path: str = config.PATH):
 def mean_result(path: str):
     files = get_files_from_dir(path)
     mean_df = pd.DataFrame()
+    config_set = Config(path)
     for file in files:
-        sample = re.sub('gene*|custom*', file)
-        df = get_result_mean(f"{file_path}/{file}")
+        sample, file_path, config_set = preparing_for_charts(path, file, config_set)
+        df = get_result_mean(file_path, config_set.config)
         df['sample'] = sample
+        df = df.reset_index().set_index(['sample', 'Cycle ID'])
         mean_df = pd.concat([mean_df, df])
-    mean_df.to_excel('mean_df.xlsx')
+    return mean_df

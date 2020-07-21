@@ -208,7 +208,7 @@ def set_index_names(df: pd.DataFrame, config_values: dict) -> list:
 
 
 def get_df(file_path: str) -> pd.DataFrame:
-    if file_path.contains('general_'):
+    if 'general_' in file_path:
         df = get_data_general(file_path)
         return df
     df = get_data_custom(file_path)
@@ -330,16 +330,43 @@ def calculate_d(
     D = calc_D(d, config_values)
     return D
 
+def get_groupby_df(
+        df: pd.DataFrame, rest: bool=True
+        ):
+    if rest:
+        return df.shift(5).groupby(["Cycle ID", "Record ID"])
+    return df.groupby(["Cycle ID", "Record ID"])
 
-def calculate_mean_if_rest(df: pd.DataFrame) -> pd.Series:
-    groupby_df = df.shift(5).groupby(["Cycle ID", "Record ID"])["Voltage(V)"]
-    mean_vol = groupby_df.mean()
+def drop_rest_from_df(df: pd.DataFrame) -> pd.DataFrame:
+    df = df.filter(lambda group: bool(group['Record ID'].unique() != "Rest"))
+    return df
+
+def get_last_cap_value(df: pd.DataFrame, rest: bool=True) -> pd.DataFrame:
+    if rest:
+        df = get_groupby_df(df)
+        df = drop_rest_from_df(df)
+        cap_df = get_groupby_df(df)["Cap/mnav"].last()
+        return cap_df.unstack("Record ID")
+    cap_df = get_groupby_df(df)["Cap/mnav"].last()
+    return cap_df.unstack("Record ID")
+
+def calculate_spec_emergy(mean_df: pd.DataFrame, cap_df: pd.DataFrame):
+    df = pd.concat([mean_df, cap_df], axis=1)
+    df['SpecEmerChg'] = df.iloc[:, 0] * df.iloc[:, 2]
+    df["SpecEmerDchg"] = df.iloc[:, 1] * df.iloc[:, 3]
+    return df
+
+def calculate_mean_if_rest(df: pd.DataFrame) -> pd.DataFrame:
+    df = get_groupby_df(df)
+    df = drop_rest_from_df(df)
+    groupby_df = get_groupby_df(df)["Voltage(V)"]
+    mean_vol = groupby_df.mean().unstack('Record ID')
     return mean_vol
 
 
-def calculate_mean_no_rest(df: pd.DataFrame) -> pd.Series:
-    groupby_df = df.groupby(["Cycle ID", "Record ID"])["Voltage(V)"]
-    mean_vol = groupby_df.mean()
+def calculate_mean_no_rest(df: pd.DataFrame) -> pd.DataFrame:
+    groupby_df = get_groupby_df(df, rest=False)["Voltage(V)"]
+    mean_vol = groupby_df.mean().unstack("Record ID")
     return mean_vol
 
 
@@ -357,8 +384,17 @@ def calculate_qchg_vol_formirovka(df: pd.DataFrame) -> pd.DataFrame:
         ["Cycle ID", "Step ID", "Record ID"])[["Voltage(V)", "Cap/mnav"]].last()
     return vol_qchg
 
-def get_result_mean(file_path: str) -> pd.DataFrame:
-    df = get_df(file_path)
+
+def get_result_mean(file_path: str, config_values: dict) -> pd.DataFrame:
+    sheet_list = ['record__1', 'record__2', 'record', 'record_1', 'record_2']
+    df = get_data_custom(file_path, sheet_list)
+    df = get_capacity_div_mnav_col(df, config_values)
     if check_on_rest(df):
-        return calculate_mean_if_rest(df)
-    return calculate_mean_no_rest(df)
+        mean_df = calculate_mean_if_rest(df)
+        cap_df = get_last_cap_value(df)
+        df = calculate_spec_emergy(mean_df, cap_df)
+        return df
+    mean_df = calculate_mean_no_rest(df)
+    cap_df = get_last_cap_value(df)
+    df = calculate_spec_emergy(mean_df, cap_df)
+    return df
