@@ -44,6 +44,12 @@ def get_data_custom(file_path):
     return df
 
 
+def get_df(file_path: str) -> pd.DataFrame:
+    if 'custom' in file_path:
+        return get_data_custom(file_path)
+    return get_data_general(file_path)
+
+
 def get_data_for_calculate(path: str) -> pd.DataFrame:
     path = f"{path}/config/config.xlsx"
     df = pd.read_excel(path, index_col=0)

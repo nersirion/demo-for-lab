@@ -20,5 +20,3 @@ class Config:
         self.config["cycles"] = dict_to_excel["Result"].columns.astype(int)
         self.config["len_df"] = len(dict_to_excel["Voltage"])
         self.config["update_n_step"] = len(dict_to_excel["Result"].index) // 5
-
-

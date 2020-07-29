@@ -9,7 +9,7 @@ from charts.final_charts import (
     get_insert_cells_gitt,
 )
 from utils import get_dict_with_all_results_gitt, get_result_formirovka, get_result_mean, correcting_result
-from get_data import get_data_for_calculate, get_data_general
+from get_data import get_df
 from config import Config
 
 
@@ -62,9 +62,9 @@ def formirovka_result(path: str = config.PATH):
     result = pd.DataFrame()
     data_to_excel = {}
     for file in files:
-        sample, file_path = preparing_for_charts(path, file)
+        sample, file_path, config_set = preparing_for_charts(path, file, config_set)
         df = get_df(file_path)
-        result=result.append(get_result_formirovka(df, config_set.config))
+        result = result.append(get_result_formirovka(df, config_set.config))
         data_to_excel[sample] = df
     result.to_excel(f"{path}/result/result.xlsx")
     charts = [
@@ -89,4 +89,5 @@ def mean_result(path: str):
         df.iloc[:, -2] = correcting_result(df.iloc[:, -2])
         df.iloc[:, -1] = correcting_result(df.iloc[:, -1])
         mean_df = pd.concat([mean_df, df])
-    return mean_df
+    mean_df.to_excel(f"{path}/result/result.xlsx")
+    mean_df.to_csv(f"{path}/result/result.csv")

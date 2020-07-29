@@ -6,7 +6,6 @@ from plotly.subplots import make_subplots
 import dash
 import dash_core_components as dcc
 import dash_html_components as html
-from dash.dependencies import Output, Input
 
 
 def get_dropdown(id, values, cycle=False):
@@ -115,4 +114,3 @@ def get_figure(rows, cycle_i, sample_value):
                     )
                 )
     return figure
-

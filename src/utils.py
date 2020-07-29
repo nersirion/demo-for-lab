@@ -3,7 +3,7 @@ import functools
 import math
 import pandas as pd
 import numpy as np
-from get_data import get_data_general, get_data_custom
+from get_data import get_df
 
 
 def find_gitt_cycle(df: pd.DataFrame, config_values: dict) -> pd.DataFrame:
@@ -207,12 +207,6 @@ def set_index_names(df: pd.DataFrame, config_values: dict) -> list:
 
 
 
-def get_df(file_path: str) -> pd.DataFrame:
-    if 'general_' in file_path:
-        df = get_data_general(file_path)
-        return df
-    df = get_data_custom(file_path)
-    return df
 
 def get_dict_with_all_results_gitt(file_path: str, config_values: dict) -> dict:
     df = get_df(file_path)
@@ -390,7 +384,7 @@ def correcting_result(column: pd.Series) -> pd.Series:
     return column
 
 def get_result_mean(file_path: str, config_values: dict) -> pd.DataFrame:
-    df = get_data_custom(file_path)
+    df = get_df(file_path)
     df = get_capacity_div_mnav_col(df, config_values)
     if check_on_rest(df):
         mean_df = calculate_mean_if_rest(df)
