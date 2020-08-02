@@ -25,8 +25,8 @@ def counting_record_id_in_cycle(df):
 
 
 def set_equal_index_in_cycle(cycle):
-    r = range(1, len(cycle) + 1)
-    cycle.index = [i for i in r]
+    cycle = cycle.reset_index(drop=True)
+    cycle.index += 1
     return cycle
 
 
