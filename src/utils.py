@@ -166,6 +166,7 @@ def add_name_sample(df: pd.DataFrame, config_values: dict) -> pd.DataFrame:
 
 def get_result_formirovka(df: pd.DataFrame, config_values: dict) -> pd.DataFrame:
     df = get_capacity_div_mnav_col(df, config_values)
+    df.iloc[:, -1] = correcting_result(df.iloc[:, -1])
     qdchg = calculate_qdchg_formirovka(df)
     qchg_vol = calculate_qchg_vol_formirovka(df)
     result = pd.concat([qchg_vol, qdchg], axis=1)
@@ -206,6 +207,10 @@ def set_index_names(df: pd.DataFrame, config_values: dict) -> list:
     return index
 
 
+def correcting_result(column: pd.Series) -> pd.Series:
+    num = len(str(int(250/column.mean())))-1
+    column = column * 10**num
+    return column
 
 
 def get_dict_with_all_results_gitt(file_path: str, config_values: dict) -> dict:
@@ -382,6 +387,7 @@ def calculate_qchg_vol_formirovka(df: pd.DataFrame) -> pd.DataFrame:
 def get_result_mean(file_path: str, config_values: dict) -> pd.DataFrame:
     df = get_df(file_path)
     df = get_capacity_div_mnav_col(df, config_values)
+    df.iloc[:, -1] = correcting_result(df.iloc[:, -1])
     if check_on_rest(df):
         mean_df = calculate_mean_if_rest(df)
         cap_df = get_last_cap_value(df)

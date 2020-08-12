@@ -188,7 +188,6 @@ class FormirovkaCharts(ChartMaker):
             self.get_series(chart, sheet_name, cycle, "Cycle Dchg", ind_df, i)
 
     def get_index_for_charts(self, df: pd.DataFrame) -> pd.DataFrame:
-        df = df[df["Record ID"] != "Rest"]
         ind_df = df.groupby(['Cycle ID', 'Record ID'])\
             .apply(lambda x: x.index[0] + 1)\
             .unstack('Cycle ID')\
@@ -197,18 +196,15 @@ class FormirovkaCharts(ChartMaker):
         last_index = df[df['Record ID'] == 'CC_DChg'].groupby(['Cycle ID'])\
             .apply(lambda x: x.index[-1] + 1)
         ind_df.loc["last"] = last_index
+        print(ind_df)
         return ind_df
 
     def get_series(
         self, chart, sheet_name: str, cycle: int, title:str, ind_df: pd.DataFrame, num_series: int
     ):
         row_start, row_end = get_row_number(title, cycle, ind_df)
-        if title == "Cycle Chg":
-            col = 5
-        else:
-            col = 6
         chart.add_series({
-            "categories": [sheet_name, row_start, col, row_end, col],
+            "categories": [sheet_name, row_start, 6, row_end, 6],
             "values": [sheet_name, row_start, 4, row_end, 4],
             "name": f"{title} {cycle}",
             "line": {"widthf}": 4, "color": self.color[num_series]},

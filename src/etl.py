@@ -8,7 +8,7 @@ from charts.final_charts import (
     get_all_charts_names_gitt,
     get_insert_cells_gitt,
 )
-from utils import get_dict_with_all_results_gitt, get_result_formirovka, get_result_mean, correcting_result
+from utils import get_dict_with_all_results_gitt, get_result_formirovka, get_result_mean
 from get_data import get_df
 from config import Config
 
