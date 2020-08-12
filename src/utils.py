@@ -378,10 +378,6 @@ def calculate_qchg_vol_formirovka(df: pd.DataFrame) -> pd.DataFrame:
         ["Cycle ID", "Step ID", "Record ID"])[["Voltage(V)", "Cap/mnav"]].last()
     return vol_qchg
 
-def correcting_result(column: pd.Series) -> pd.Series:
-    num = len(str(int(250/column.mean())))-1
-    column = column * 10**num
-    return column
 
 def get_result_mean(file_path: str, config_values: dict) -> pd.DataFrame:
     df = get_df(file_path)

@@ -58,3 +58,8 @@ def get_data_for_calculate(path: str) -> pd.DataFrame:
     path = f"{path}/config/config.xlsx"
     df = pd.read_excel(path, index_col=0)
     return df
+
+def correcting_result(column: pd.Series) -> pd.Series:
+    num = len(str(int(250/column.mean())))-1
+    column = column * 10**num
+    return column

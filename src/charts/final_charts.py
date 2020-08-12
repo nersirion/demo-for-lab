@@ -3,7 +3,7 @@ import pandas as pd
 from charts.charts import ChartMaker
 
 def get_charts_names_gitt_result() -> list:
-    names_and_x = [("Diffrent Cycles", "Voltage"), ("Diffrent Titr", "Cycles")] 
+    names_and_x = [("Diffrent Cycles", "Voltage"), ("Diffrent Titr", "Cycles")]
     y_axis = ["D", "LogD", "Rpol", "Rohm"]
     charts=[(name, "Result", x, y) for (name, x) in names_and_x for y in y_axis ]
     return charts
@@ -119,9 +119,9 @@ def update_marker_and_fill(series, sheet_name:str, generator):
 
 
 def get_categories_and_values(name:str, sheet_name:str, num_series:int, num_chart:int, config_values:dict):
-    row_start, row_end, col_start, col_end = get_row_col_index_values(name, num_series, num_chart, config_values) 
+    row_start, row_end, col_start, col_end = get_row_col_index_values(name, num_series, num_chart, config_values)
     values = [sheet_name, row_start, col_start, row_end, col_end]
-    row_start, row_end, col_start, col_end = get_row_col_index_categories(name, num_series, num_chart, config_values) 
+    row_start, row_end, col_start, col_end = get_row_col_index_categories(name, num_series, num_chart, config_values)
     categories = [sheet_name, row_start, col_start, row_end, col_end]
     return (categories, values)
 
@@ -188,6 +188,7 @@ class FormirovkaCharts(ChartMaker):
             self.get_series(chart, sheet_name, cycle, "Cycle Dchg", ind_df, i)
 
     def get_index_for_charts(self, df: pd.DataFrame) -> pd.DataFrame:
+        df = df[df["Record ID"] != "Rest"]
         ind_df = df.groupby(['Cycle ID', 'Record ID'])\
             .apply(lambda x: x.index[0] + 1)\
             .unstack('Cycle ID')\
@@ -202,8 +203,12 @@ class FormirovkaCharts(ChartMaker):
         self, chart, sheet_name: str, cycle: int, title:str, ind_df: pd.DataFrame, num_series: int
     ):
         row_start, row_end = get_row_number(title, cycle, ind_df)
+        if title == "Cycle Chg":
+            col = 5
+        else:
+            col = 6
         chart.add_series({
-            "categories": [sheet_name, row_start, 6, row_end, 6],
+            "categories": [sheet_name, row_start, col, row_end, col],
             "values": [sheet_name, row_start, 4, row_end, 4],
             "name": f"{title} {cycle}",
             "line": {"widthf}": 4, "color": self.color[num_series]},

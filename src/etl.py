@@ -24,8 +24,7 @@ def gitt_result(path: str):
         cells_for_charts = get_insert_cells_gitt(config_set.config)
         save_path = create_save_path(path, sample, config_set.config)
         charts = get_all_charts_names_gitt(dict_to_excel["Result"])
-        temp_df = dict_to_excel["Result"]
-        temp_df["Urange"] = f"{dict_to_excel['Umin']-dict_to_excel['Umax']}"
+        temp_df = get_temp_df(dict_to_excel, config_set.config, sample)
         result = pd.concat([result, temp_df])
         gitt_charts = GittCharts(
             save_path, charts, cells_for_charts, dict_to_excel, config_set.config
@@ -34,6 +33,13 @@ def gitt_result(path: str):
         gitt_charts.close_writer()
     result.to_excel(f"{path}/result/result.xlsx")
 
+def get_temp_df(dict_to_excel: dict, config: dict, sample: str) -> pd.DataFrame:
+    temp_df = dict_to_excel["Result"]
+    Umin = config["Umin"]
+    Umax = config["Umax"]
+    temp_df["Urange"] = f"{Umin}-{Umax}"
+    temp_df["sample"] = sample
+    return temp_df
 
 def get_files_from_dir(path: str) -> list:
     files = [file for file in os.listdir(path) if os.path.isfile(f"{path}/{file}")]
