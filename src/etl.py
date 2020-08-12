@@ -16,6 +16,7 @@ from config import Config
 def gitt_result(path: str):
     files = get_files_from_dir(path)
     config_set = Config(path)
+    result = pd.DataFrame()
     for file in files:
         sample, file_path, config_set = preparing_for_charts(path, file, config_set)
         dict_to_excel = get_dict_with_all_results_gitt(file_path, config_set.config)
@@ -23,11 +24,15 @@ def gitt_result(path: str):
         cells_for_charts = get_insert_cells_gitt(config_set.config)
         save_path = create_save_path(path, sample, config_set.config)
         charts = get_all_charts_names_gitt(dict_to_excel["Result"])
+        temp_df = dict_to_excel["Result"]
+        temp_df["Urange"] = f"{dict_to_excel['Umin']-dict_to_excel['Umax']}"
+        result = pd.concat([result, temp_df])
         gitt_charts = GittCharts(
             save_path, charts, cells_for_charts, dict_to_excel, config_set.config
         )
         gitt_charts.insert_data()
         gitt_charts.close_writer()
+    result.to_excel(f"{path}/result/result.xlsx")
 
 
 def get_files_from_dir(path: str) -> list:
@@ -86,8 +91,6 @@ def mean_result(path: str):
         df = get_result_mean(file_path, config_set.config)
         df['sample'] = sample
         df = df.reset_index().set_index(['sample', 'Cycle ID'])
-        df.iloc[:, -2] = correcting_result(df.iloc[:, -2])
-        df.iloc[:, -1] = correcting_result(df.iloc[:, -1])
         mean_df = pd.concat([mean_df, df])
     mean_df.to_excel(f"{path}/result/result.xlsx")
     mean_df.to_csv(f"{path}/result/result.csv")

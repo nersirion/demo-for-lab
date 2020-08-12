@@ -17,6 +17,8 @@ def get_data_general(file_path):
         .apply(lambda group: group.iloc[1:, :])
         .reset_index(drop=True)
     )
+    df.iloc[:, -2] = correcting_result(df.iloc[:, -2])
+    df.iloc[:, -1] = correcting_result(df.iloc[:, -1])
     return df
 
 
@@ -41,6 +43,8 @@ def get_data_custom(file_path):
         if df_on_sheet["Voltage(V)"].mean() > 1000:
             df["Voltage(V)"] = df["Voltage(V)"] / 1000
         df = pd.concat([df_on_sheet, df])
+    df.iloc[:, -2] = correcting_result(df.iloc[:, -2])
+    df.iloc[:, -1] = correcting_result(df.iloc[:, -1])
     return df
 
 

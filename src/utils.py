@@ -346,8 +346,8 @@ def get_last_cap_value(df: pd.DataFrame, rest: bool=True) -> pd.DataFrame:
 
 def calculate_spec_emergy(mean_df: pd.DataFrame, cap_df: pd.DataFrame):
     df = pd.concat([mean_df, cap_df], axis=1)
-    df['SpecEmerChg'] = df.iloc[:, 0] * df.iloc[:, 2]
-    df["SpecEmerDchg"] = df.iloc[:, 1] * df.iloc[:, 3]
+    df['SpecEnerChg'] = df.iloc[:, 0] * df.iloc[:, 2]
+    df["SpecEnerDchg"] = df.iloc[:, 1] * df.iloc[:, 3]
     return df
 
 def calculate_mean_if_rest(df: pd.DataFrame) -> pd.DataFrame:
@@ -379,7 +379,7 @@ def calculate_qchg_vol_formirovka(df: pd.DataFrame) -> pd.DataFrame:
     return vol_qchg
 
 def correcting_result(column: pd.Series) -> pd.Series:
-    num = len(str(int(1000/column.mean())))-1
+    num = len(str(int(250/column.mean())))-1
     column = column * 10**num
     return column
 

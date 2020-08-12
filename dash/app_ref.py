@@ -1,3 +1,4 @@
+import sys
 import plotly.graph_objects as go
 from dash_table.Format import Format
 import dash_table
@@ -9,7 +10,7 @@ import dash_html_components as html
 from dash.dependencies import Output, Input
 import app_utils
 
-path = r"D:\For Wife\Source\test\gitt\all_gitt.xlsx"
+path = sys.argv[1]
 df = pd.read_excel(path)
 
 app = dash.Dash(__name__)
