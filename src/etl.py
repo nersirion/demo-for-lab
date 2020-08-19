@@ -5,6 +5,7 @@ import config
 from charts.final_charts import (
     FormirovkaCharts,
     GittCharts,
+    MeanCharts,
     get_all_charts_names_gitt,
     get_insert_cells_gitt,
 )
@@ -98,5 +99,18 @@ def mean_result(path: str):
         df['sample'] = sample
         df = df.reset_index().set_index(['sample', 'Cycle ID'])
         mean_df = pd.concat([mean_df, df])
-    mean_df.to_excel(f"{path}/result/result.xlsx")
-    mean_df.to_csv(f"{path}/result/result.csv")
+
+    samples = mean_df.index.get_level_values(0).unique()
+    names = ("Voltage, V", "Specific Capacity, mAh/g", "Specific Energy, W/kg")
+    charts = [
+            (f"{sample} {name}", "sheet_1", "Cycles number", name)
+            for sample in samples for name in names
+            ]
+    cells = [
+        f"{sym}{num}"
+        for num in range(2, 18*len(samples), 18)
+            for sym in ("J", "T", "AD")]
+    save_path = f"{path}/result/result.xlsx"
+    mean_chart = MeanCharts(save_path, charts, cells, {"sheet_1": mean_df.reset_index()})
+    mean_chart.insert_data()
+    mean_chart.close_writer()

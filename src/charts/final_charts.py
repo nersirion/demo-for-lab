@@ -171,7 +171,7 @@ class FormirovkaCharts(ChartMaker):
     ):
         super().__init__(save_path, charts_list, place_chart, data_to_excel)
         self.data = data_to_excel
-        self.color = [self.generator.next_color() for i in range(12)]
+        self.color = [self.generator.next_color() for i in range(12)] * 10
 
     def insert_data(self):
         for num_chart, name, sheet_name in self:
@@ -188,15 +188,17 @@ class FormirovkaCharts(ChartMaker):
             self.get_series(chart, sheet_name, cycle, "Cycle Dchg", ind_df, i)
 
     def get_index_for_charts(self, df: pd.DataFrame) -> pd.DataFrame:
-        ind_df = df.groupby(['Cycle ID', 'Record ID'])\
+        df = df[df["Record ID"] != "Rest"]
+        first_index = df.groupby(['Cycle ID', 'Record ID'])\
             .apply(lambda x: x.index[0] + 1)\
             .unstack('Cycle ID')\
             .iloc[:, :-1]
-        ind_df.index = ["chg", "dchg", "last"]
-        last_index = df[df['Record ID'] == 'CC_DChg'].groupby(['Cycle ID'])\
-            .apply(lambda x: x.index[-1] + 1)
-        ind_df.loc["last"] = last_index
-        print(ind_df)
+        last_index = df.groupby(['Cycle ID', 'Record ID'])\
+            .apply(lambda x: x.index[-1] + 1)\
+            .unstack('Cycle ID')\
+            .iloc[:, :-1]
+        ind_df = pd.concat([first_index, last_index])
+        ind_df.index = ["chg", "dchg", "chg_end", "last"]
         return ind_df
 
     def get_series(
@@ -212,6 +214,12 @@ class FormirovkaCharts(ChartMaker):
 
 
 
+def get_index(df: pd.DataFrame, i: int, groupby, unstack: str):
+    index = df.groupby(groupby)\
+            .apply(lambda x: x.index[i] + 1)\
+            .unstack(unstack)
+    return index
+
 def set_categories_and_values(
     chart, sheet_name: str, cycle: int, title:str, ind_df: pd.DataFrame
 ):
@@ -220,12 +228,11 @@ def set_categories_and_values(
         "categories": [sheet_name, row_start, 5, row_end, 5],
         "values": [sheet_name, row_start, 3, row_end, 3],
         "name":  f"{title} {cycle}",
-        "line": {"widthf}": 4, "color": generator.next_color()},
+        "line": {"width": 4, "color": generator.next_color()},
         "smooth": True })
 
 def set_series_setings(series, title:str, cycle: int, generator):
     series["name"] = f"{title} {cycle}"
-    print(series["line"])
     series["line"] = {"width": 4, "color": generator.next_color()}
     series["smooth"] = True
 
@@ -235,8 +242,44 @@ def set_series_setings(series, title:str, cycle: int, generator):
 def get_row_number(title: str, cycle: int, ind_df: pd.DataFrame) -> tuple:
     if title == "Cycle Chg":
         row_start = ind_df.loc["chg", cycle]
-        row_end = ind_df.loc["dchg", cycle] - 1
+        row_end = ind_df.loc["chg_end", cycle]
     else:
         row_start = ind_df.loc["dchg", cycle]
         row_end = ind_df.loc["last", cycle]
     return (row_start, row_end)
+
+
+class MeanCharts(ChartMaker):
+
+    def __init__(
+        self, save_path:str, charts_list:list, place_chart:list, data_to_excel:dict
+    ):
+        super().__init__(save_path, charts_list, place_chart, data_to_excel)
+        self.data = data_to_excel
+        self.color = [self.generator.next_color() for i in range(2)]
+
+    def insert_data(self):
+        for num_chart, name, sheet_name in self:
+            chart = self.workbook.charts[num_chart]
+            del chart.series[0]
+            self.add_series(chart, name, sheet_name, num_chart, False)
+            self.add_series(chart, name, sheet_name, num_chart, True)
+
+    def add_series(self, chart, name, sheet_name, num_chart: int, odd: bool):
+        sample = name.split()[0]
+        if odd:
+            col = num_chart % 3 * 2 + 4
+        else:
+            col = num_chart % 3 * 2 + 3
+        first_index = self.data["sheet_1"]\
+                .groupby("sample")\
+                .apply(lambda x: x.index[0] + 1)
+        last_index = self.data["sheet_1"]\
+                .groupby("sample")\
+                .apply(lambda x: x.index[-1] + 1)
+        chart.add_series({
+            "categories": [sheet_name, first_index.loc[sample], 2, last_index.loc[sample], 2],
+            "values": [sheet_name, first_index.loc[sample], col, last_index.loc[sample], col],
+            "name":  "dchg" if odd else "chg",
+            "line": {"width": 4, "color": self.color[0] if odd else self.color[1]},
+            "smooth": True })

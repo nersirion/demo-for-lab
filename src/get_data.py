@@ -40,7 +40,8 @@ def get_data_custom(file_path):
         df_on_sheet["Record ID"] = df_on_sheet["Record ID"].str.replace("\t", "")
         if df_on_sheet["Voltage(V)"].mean() > 1000:
             df["Voltage(V)"] = df["Voltage(V)"] / 1000
-        df = pd.concat([df_on_sheet, df])
+        df = pd.concat([df, df_on_sheet])
+        df = df.reset_index(drop=True)
     return df
 
 
