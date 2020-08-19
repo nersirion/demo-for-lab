@@ -41,17 +41,28 @@ def cut_needless_deltaes_value(deltaes: pd.DataFrame, n_step: int) -> pd.DataFra
     deltaes = deltaes.groupby("Cycle ID").head(n_step)
     return deltaes
 
-def modificate_deltaes(deltaes: pd.Series, rest_df: pd.DataFrame, dchg_df: pd.DataFrame) -> pd.Series:
+
+def modificate_deltaes(
+    deltaes: pd.Series, rest_df: pd.DataFrame, dchg_df: pd.DataFrame
+) -> pd.Series:
     deltaes = deltaes.shift(1)
     x = dchg_df.groupby("Cycle ID")["Voltage(V)"].first()
-    y = rest_df.groupby(["Cycle ID", "Step ID"])["Voltage(V)"].last().groupby("Cycle ID").first()
-    deltaes.iloc[0] = abs(x-y).loc[deltaes.index[0][0]]
+    y = (
+        rest_df.groupby(["Cycle ID", "Step ID"])["Voltage(V)"]
+        .last()
+        .groupby("Cycle ID")
+        .first()
+    )
+    deltaes.iloc[0] = abs(x - y).loc[deltaes.index[0][0]]
     return deltaes
+
 
 def update_deltaes(
     deltaes: pd.Series, rest_df: pd.DataFrame, dchg_df: pd.DataFrame
 ) -> pd.Series:
-    deltaes = deltaes.groupby("Cycle ID").apply(lambda x: modificate_deltaes(x, rest_df, dchg_df))
+    deltaes = deltaes.groupby("Cycle ID").apply(
+        lambda x: modificate_deltaes(x, rest_df, dchg_df)
+    )
     return deltaes
 
 
@@ -157,6 +168,7 @@ def get_capacity_div_mnav_col(df: pd.DataFrame, config_values: dict) -> pd.DataF
     df["Cap/mnav"] = df["CmcCap(mAh/g)"] / config_values["mnav"]
     return df
 
+
 def add_name_sample(df: pd.DataFrame, config_values: dict) -> pd.DataFrame:
     df["sample"] = config_values["sample"]
     df = df.reset_index()
@@ -194,22 +206,27 @@ def get_main_results_gitt(df: pd.DataFrame, config_values: dict) -> pd.DataFrame
     result.index = set_index_names(df, config_values)
     return result
 
+
 def set_index_names(df: pd.DataFrame, config_values: dict) -> list:
     names = ["D", "LogD", "Rpol", "Rohm", "U_титр"]
     if chg_equal_dchg(df):
         index = [
-            f"{name}_{i}" for name in names for i in range(1, config_values["n_step"] * 2 + 1)
+            f"{name}_{i}"
+            for name in names
+            for i in range(1, config_values["n_step"] * 2 + 1)
         ]
     else:
         index = [
-            f"{name}_{i}" for name in names for i in range(1, config_values["n_step"] + 1)
+            f"{name}_{i}"
+            for name in names
+            for i in range(1, config_values["n_step"] + 1)
         ]
     return index
 
 
 def correcting_result(column: pd.Series) -> pd.Series:
-    num = len(str(int(250/column.mean())))-1
-    column = column * 10**num
+    num = len(str(int(250 / column.mean()))) - 1
+    column = column * 10 ** num
     return column
 
 
@@ -329,18 +346,19 @@ def calculate_d(
     D = calc_D(d, config_values)
     return D
 
-def get_groupby_df(
-        df: pd.DataFrame, rest: bool=True
-        ):
+
+def get_groupby_df(df: pd.DataFrame, rest: bool = True):
     if rest:
         return df.shift(5).groupby(["Cycle ID", "Record ID"])
     return df.groupby(["Cycle ID", "Record ID"])
 
+
 def drop_rest_from_df(df: pd.DataFrame) -> pd.DataFrame:
-    df = df.filter(lambda group: bool(group['Record ID'].unique() != "Rest"))
+    df = df.filter(lambda group: bool(group["Record ID"].unique() != "Rest"))
     return df
 
-def get_last_cap_value(df: pd.DataFrame, rest: bool=True) -> pd.DataFrame:
+
+def get_last_cap_value(df: pd.DataFrame, rest: bool = True) -> pd.DataFrame:
     if rest:
         df = get_groupby_df(df, rest=False)
         df = drop_rest_from_df(df)
@@ -349,17 +367,19 @@ def get_last_cap_value(df: pd.DataFrame, rest: bool=True) -> pd.DataFrame:
     cap_df = get_groupby_df(df, rest=False)["Cap/mnav"].last()
     return cap_df.unstack("Record ID")
 
+
 def calculate_spec_emergy(mean_df: pd.DataFrame, cap_df: pd.DataFrame):
     df = pd.concat([mean_df, cap_df], axis=1)
-    df['SpecEnerChg'] = df.iloc[:, 0] * df.iloc[:, 2]
+    df["SpecEnerChg"] = df.iloc[:, 0] * df.iloc[:, 2]
     df["SpecEnerDchg"] = df.iloc[:, 1] * df.iloc[:, 3]
     return df
+
 
 def calculate_mean_if_rest(df: pd.DataFrame) -> pd.DataFrame:
     df = get_groupby_df(df)
     df = drop_rest_from_df(df)
     groupby_df = get_groupby_df(df)["Voltage(V)"]
-    mean_vol = groupby_df.mean().unstack('Record ID')
+    mean_vol = groupby_df.mean().unstack("Record ID")
     return mean_vol
 
 
@@ -379,8 +399,9 @@ def calculate_qdchg_formirovka(df: pd.DataFrame) -> pd.Series:
 @drop_record_decorator
 def calculate_qchg_vol_formirovka(df: pd.DataFrame) -> pd.DataFrame:
     df = df[df["Record ID"] == "CCCV_Chg"]
-    vol_qchg = df.groupby(
-        ["Cycle ID", "Step ID", "Record ID"])[["Voltage(V)", "Cap/mnav"]].last()
+    vol_qchg = df.groupby(["Cycle ID", "Step ID", "Record ID"])[
+        ["Voltage(V)", "Cap/mnav"]
+    ].last()
     return vol_qchg
 
 

@@ -24,16 +24,22 @@ def get_data_custom(file_path):
     df = pd.DataFrame()
     dfs_on_sheets = pd.read_excel(file_path, sheet_name=None)
     for sheet, df_on_sheet in dfs_on_sheets.items():
-        if 'record' not in sheet:
+        if "record" not in sheet:
             continue
         if df_on_sheet.iloc[0, 0] == "Cycle ID":
             df_on_sheet.columns = df_on_sheet.iloc[0]
             df_on_sheet = df_on_sheet.drop(0)
-        if 'Temperature(°C)' in str(df_on_sheet.columns[:8]):
+        if "Temperature(°C)" in str(df_on_sheet.columns[:8]):
             df_on_sheet = df_on_sheet.iloc[:, [0, 1, 2, 5, 8]]
         else:
             df_on_sheet = df_on_sheet.iloc[:, [0, 1, 2, 5, 7]]
-        df_on_sheet.columns = ["Cycle ID", "Step ID", "Record ID", "Voltage(V)", "CmcCap(mAh/g)"]
+        df_on_sheet.columns = [
+            "Cycle ID",
+            "Step ID",
+            "Record ID",
+            "Voltage(V)",
+            "CmcCap(mAh/g)",
+        ]
         df_on_sheet = df_on_sheet.astype(
             {"Cycle ID": "float", "Step ID": "float", "Voltage(V)": "float"}
         )
@@ -46,7 +52,7 @@ def get_data_custom(file_path):
 
 
 def get_df(file_path: str) -> pd.DataFrame:
-    if 'custom' in file_path:
+    if "custom" in file_path:
         return get_data_custom(file_path)
     return get_data_general(file_path)
 

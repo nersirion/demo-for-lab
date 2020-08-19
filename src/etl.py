@@ -34,6 +34,7 @@ def gitt_result(path: str):
         gitt_charts.close_writer()
     result.to_excel(f"{path}/result/result.xlsx")
 
+
 def get_temp_df(dict_to_excel: dict, config: dict, sample: str) -> pd.DataFrame:
     temp_df = dict_to_excel["Result"]
     Umin = config["Umin"]
@@ -41,6 +42,7 @@ def get_temp_df(dict_to_excel: dict, config: dict, sample: str) -> pd.DataFrame:
     temp_df["Urange"] = f"{Umin}-{Umax}"
     temp_df["sample"] = sample
     return temp_df
+
 
 def get_files_from_dir(path: str) -> list:
     files = [file for file in os.listdir(path) if os.path.isfile(f"{path}/{file}")]
@@ -89,6 +91,7 @@ def formirovka_result(path: str = config.PATH):
     form_chart.insert_data()
     form_chart.close_writer()
 
+
 def mean_result(path: str):
     files = get_files_from_dir(path)
     mean_df = pd.DataFrame()
@@ -96,21 +99,25 @@ def mean_result(path: str):
     for file in files:
         sample, file_path, config_set = preparing_for_charts(path, file, config_set)
         df = get_result_mean(file_path, config_set.config)
-        df['sample'] = sample
-        df = df.reset_index().set_index(['sample', 'Cycle ID'])
+        df["sample"] = sample
+        df = df.reset_index().set_index(["sample", "Cycle ID"])
         mean_df = pd.concat([mean_df, df])
 
     samples = mean_df.index.get_level_values(0).unique()
     names = ("Voltage, V", "Specific Capacity, mAh/g", "Specific Energy, W/kg")
     charts = [
-            (f"{sample} {name}", "sheet_1", "Cycles number", name)
-            for sample in samples for name in names
-            ]
+        (f"{sample} {name}", "sheet_1", "Cycles number", name)
+        for sample in samples
+        for name in names
+    ]
     cells = [
         f"{sym}{num}"
-        for num in range(2, 18*len(samples), 18)
-            for sym in ("J", "T", "AD")]
+        for num in range(2, 18 * len(samples), 18)
+        for sym in ("J", "T", "AD")
+    ]
     save_path = f"{path}/result/result.xlsx"
-    mean_chart = MeanCharts(save_path, charts, cells, {"sheet_1": mean_df.reset_index()})
+    mean_chart = MeanCharts(
+        save_path, charts, cells, {"sheet_1": mean_df.reset_index()}
+    )
     mean_chart.insert_data()
     mean_chart.close_writer()
