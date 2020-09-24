@@ -328,6 +328,7 @@ class MeanCharts(ChartMaker):
         super().__init__(save_path, charts_list, place_chart, data_to_excel)
         self.data = data_to_excel
         self.color = [self.generator.next_color() for i in range(2)]
+        self.marker = [self.generator.next_marker() for i in range(2)]
 
     def insert_data(self):
         for num_chart, name, sheet_name in self:
@@ -365,7 +366,12 @@ class MeanCharts(ChartMaker):
                     col,
                 ],
                 "name": "dchg" if odd else "chg",
-                "line": {"width": 4, "color": self.color[0] if odd else self.color[1]},
+                "marker": {
+                "type":self.marker[0] if odd else self.marker[1],
+                "size": 6,
+                "border": {"color": "black"},
+                "fill": {"color": self.color[0] if odd else self.color[1]},
+            },
                 "smooth": True,
             }
         )
